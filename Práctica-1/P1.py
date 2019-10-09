@@ -205,16 +205,29 @@ def ejercicio_1(image):
 
 # EJERCICIO 2 #
 
-"""Genera representación de pirámide gaussiana
+"""Hace un subsampling de la imagen pasada como argumento. Devuelve la imagen recortada.
+- image: imagen a recortar"""
+def subsampling(image):
+    n_fil = int(image.shape[0]/2)
+    n_col = int(image.shape[1]/2)
+    cp = np.copy(image)
+
+    for a in range(0,n_fil):
+        cp = np.delete(cp,a,axis = 0)
+    for a in range(0,n_col):
+        cp = np.delete(cp,a,axis = 1)
+
+    return cp
+
+"""Genera representación de pirámide gaussiana. Devuelve la lista de imágenes que forman la pirámide gaussiana
 - image: La imagen a la que generar la pirámide gaussiana
 - border_type: Tipo de borde a utilizar
-- levels: Número de niveles de la pirámide gaussiana (4 por defecto)
-Devuelve: Lista de imágenes que forman la pirámide gaussiana"""
+- levels: Número de niveles de la pirámide gaussiana (4 por defecto)"""
 def gaussian_pyramid(image, levels = 4, border_type = cv2.BORDER_DEFAULT):
     pyramid = [image]
     for n in range(levels):
-        image = gaussian_blur(image, 0, size = (7, 7), border_type = border_type)
-        image = cv2.resize(image, None, fx = 0.5, fy = 0.5, interpolation = cv2.INTER_CUBIC)
+        image = gaussian_blur(image, 1, 1, size = (3, 3), border_type = border_type)
+        image = subsampling(image)
         pyramid.append(image)
     return pyramid
 
@@ -228,7 +241,7 @@ def laplacian_pyramid(image, levels = 4, border_type = cv2.BORDER_DEFAULT):
     lap_pyr   = []
     for n in range(levels):
         gau_n_1 = cv2.resize(gau_pyr[n+1], (gau_pyr[n].shape[1], gau_pyr[n].shape[0]), interpolation = cv2.INTER_CUBIC)
-        lap_pyr.append(cv2.subtract(gau_pyr[n], gau_n_1) + 40) # Resta al nivel n el nivel n+1 y suma una constante para visualizarlo
+        lap_pyr.append(cv2.subtract(gau_pyr[n], gau_n_1) + 64) # Resta al nivel n el nivel n+1 y suma una constante para visualizarlo
     return lap_pyr
 
 """Ejecución de ejemplos del ejercicio 2."""
