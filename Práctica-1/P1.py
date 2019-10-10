@@ -39,6 +39,7 @@ def normaliza(image):
         max = np.amax(image)
         min = np.amin(image)
         if max!=255 and min!=0:
+            print('Normalizando imagen')
             for i in range(image.shape[0]):
                 for j in range(image.shape[1]):
                     image[i][j] = (image[i][j]-min)/(max-min) * 255
@@ -46,6 +47,7 @@ def normaliza(image):
         max = np.amax(image, (0,1))
         min = np.amin(image, (0,1))
         if max[0]!=255 and max[1]!=255 and max[2]!=255 and min[0]!=0 and min[1]!=0 and min[2]!=0:
+            print('Normalizando imagen')
             for i in range(image.shape[0]):
                 for j in range(image.shape[1]):
                     for k in range(image.shape[2]):
@@ -62,6 +64,10 @@ def pintaI(image_title, image):
     plt.imshow(imgrgb)
     plt.title(image_title)  # Ponemos nombre a la imagen
     plt.show()
+
+    #cv2.imshow(image_title, image)
+    #cv2.waitKey(0)
+    #cv2.destroyAllWindows()
 
 """ Lee una lista de imágenes ya sea en grises o en color
 - image_list: lista de imágenes a concatenar
@@ -164,7 +170,9 @@ Argumentos posicionales:
 - size: tamaño del kernel
 """
 def derive_convolution(dx, dy, size):
-  return cv2.getDerivKernels(dx, dy, size)
+    kx, ky = cv2.getDerivKernels(dx,dy,size)
+    dst = cv2.sepFilter2D(img, -1, kx, ky)
+    return dst
 
 """Aplica máscara laplaciana a imagen. Devuelve la imagen con la máscara aplicada
 - im: Imagen a la que aplicar la máscara
@@ -204,6 +212,22 @@ def ejercicio_1(image):
     input("Pulsa 'Enter' para continuar\n")
 
 # EJERCICIO 2 #
+
+def muestraMI(vim, titulo = "Imágenes"):
+  """Visualiza varias imágenes a la vez
+  - vim: Secuencia de imágenes"""
+
+  altura = max(im.shape[0] for im in vim)
+
+  for i,im in enumerate(vim):
+    if im.shape[0] < altura: # Redimensionar imágenes
+      borde = int((altura - vim[i].shape[0])/2)
+      vim[i] = cv2.copyMakeBorder(
+        vim[i], borde, borde + (altura - vim[i].shape[0]) % 2,
+        0, 0, cv2.BORDER_CONSTANT, value = (0,0,0))
+
+  imMulti = cv2.hconcat(vim)
+  pintaI(titulo, imMulti)
 
 """Hace un subsampling de la imagen pasada como argumento. Devuelve la imagen recortada.
 - image: imagen a recortar"""
@@ -248,12 +272,13 @@ def laplacian_pyramid(image, levels = 4, border_type = cv2.BORDER_DEFAULT):
 def ejercicio_2(image):
     print("--- EJERCICIO 2A - GAUSSIAN PYRAMID ---")
     gau_pyr = gaussian_pyramid(image, 4)
-    imprimir_imagenes_titulos(gau_pyr, ['1', '2', '3', '4'], 1, 4, 'Gaussian pyramid')
+    muestraMI(gau_pyr, 'Pirámide gaussiana')
     input("Pulsa 'Enter' para continuar\n")
 
     print("--- EJERCICIO 2B - LAPLACIAN PYRAMID ---")
     lap_pyr = laplacian_pyramid(image, 4)
-    imprimir_imagenes_titulos(lap_pyr, ['1', '2', '3', '4'], 1, 4, 'Laplacian pyramid')
+    img = construct_pyramid(lap_pyr)
+    muestraMI(lap_pyr, 'Pirámide laplaciana')
     input("Pulsa 'Enter' para continuar\n")
 
     #print("--- EJERCICIO 2C - ESPACIO DE ESCALAS LAPLACIANO ---")
@@ -281,8 +306,8 @@ def ejercicio_3(image):
 ################
 
 def main():
-    im_color = leer_imagen('data/plane.bmp', 1)   # Leemos la imagen en color
-    #ejercicio_1(im_color)
+    im_color = leer_imagen('data/plane.bmp', 0)   # Leemos la imagen en color
+    ejercicio_1(im_color)
     ejercicio_2(im_color)
     #ejercicio_3(im_color)
 
