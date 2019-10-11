@@ -212,7 +212,7 @@ def ejercicio_1(image):
     input("Pulsa 'Enter' para continuar\n")
 
 # EJERCICIO 2 #
-
+"""comentarlo"""
 def muestraMI(vim, titulo = "Imágenes"):
   """Visualiza varias imágenes a la vez
   - vim: Secuencia de imágenes"""
