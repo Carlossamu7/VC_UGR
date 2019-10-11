@@ -169,10 +169,10 @@ Argumentos posicionales:
 - dy: orden de derivación respecto de y
 - size: tamaño del kernel
 """
-def derive_convolution(dx, dy, size):
+def derive_convolution(image, dx, dy, size):
     kx, ky = cv2.getDerivKernels(dx,dy,size)
-    dst = cv2.sepFilter2D(img, -1, kx, ky)
-    return dst
+    image = cv2.sepFilter2D(image, -1, kx, ky)
+    return image
 
 """Aplica máscara laplaciana a imagen. Devuelve la imagen con la máscara aplicada
 - im: Imagen a la que aplicar la máscara
@@ -201,7 +201,7 @@ def ejercicio_1(image):
         print("tam = {}".format(tam))
         for dx, dy in ders:
             print("  dx = {}, dy = {}".format(dx, dy), end = ": ")
-            print("{}, {}".format(*map(np.transpose, derive_convolution(dx, dy, tam) )))  # Imprimo vectores fila
+            print("{}, {}".format(*map(np.transpose, derive_convolution(image, dx, dy, tam) )))  # Imprimo vectores fila
     input("Pulsa 'Enter' para continuar\n")
 
     print("--- EJERCICIO 1B -  LAPLACIANA DE GAUSSIANA ---")
@@ -277,7 +277,6 @@ def ejercicio_2(image):
 
     print("--- EJERCICIO 2B - LAPLACIAN PYRAMID ---")
     lap_pyr = laplacian_pyramid(image, 4)
-    img = construct_pyramid(lap_pyr)
     muestraMI(lap_pyr, 'Pirámide laplaciana')
     input("Pulsa 'Enter' para continuar\n")
 
@@ -306,7 +305,7 @@ def ejercicio_3(image):
 ################
 
 def main():
-    im_color = leer_imagen('data/plane.bmp', 0)   # Leemos la imagen en color
+    im_color = leer_imagen('data/plane.bmp', 1)   # Leemos la imagen en color
     ejercicio_1(im_color)
     ejercicio_2(im_color)
     #ejercicio_3(im_color)
