@@ -154,23 +154,24 @@ def imprimir_imagenes_titulos(image_list, image_title_list, rows, columns, windo
 - image: la imagen
 - sigma_x: sigma en la dirección X
 - sigma_y: sigma en la dirección X
-- size: tamaño del kernel
+- ksize: tamaño del kernel (2D, positivos e impares). Si es (0,0) se obtiene a través de sigma
 - border_type: tipo de bordes
 
 La clave es la función GaussianBlur de cv2:
 dst = cv.GaussianBlur(src, ksize, sigmaX[, dst[, sigmaY[, borderType=BORDER_DEFAULT]]] )
 """
-def gaussian_blur(image, sigma_x, sigma_y = 0, size = (0, 0), border_type = cv2.BORDER_DEFAULT):
-    return cv2.GaussianBlur(image, size, sigma_x, sigmaY = sigma_y, borderType = border_type)
+def gaussian_blur(image, sigma_x, sigma_y = 0, ksize = (0,0), border_type = cv2.BORDER_DEFAULT):
+    return cv2.GaussianBlur(image, ksize, sigma_x, sigmaY = sigma_y, borderType = border_type)
 
 """Obtiene máscaras 1D de máscaras derivadas. Devuelve los vectores de derivada
 Argumentos posicionales:
 - dx: orden de derivación respecto de x
 - dy: orden de derivación respecto de y
-- size: tamaño del kernel
+- ksize: tamaño del kernel, puede ser 1, 3, 5, 7
 """
-def derive_convolution(image, dx, dy, size):
-    kx, ky = cv2.getDerivKernels(dx,dy,size)
+def derive_convolution(image, dx, dy, ksize):
+    print('Máscara de derivada con orden ({}, {}) y tamaño del kernel {}'.format(dx, dy, ksize))
+    kx, ky = cv2.getDerivKernels(dx,dy,ksize)
     image = cv2.sepFilter2D(image, -1, kx, ky)
     return image
 
@@ -182,7 +183,7 @@ def derive_convolution(image, dx, dy, size):
 """
 def laplacian_gaussian(image, sigma = 0, k_size = 7, size = (0, 0), border_type = cv2.BORDER_DEFAULT):
   # Reducimos ruido con alisado gaussiano
-  blur = gaussian_blur(image, sigma, size = size, border_type = border_type)
+  blur = gaussian_blur(image, sigma, ksize = size, border_type = border_type)
   return cv2.Laplacian(blur, -1, ksize = k_size, borderType = border_type, delta = 50)
 
 """Ejecución de ejemplos del ejercicio 1 con diferentes σ."""
@@ -190,18 +191,18 @@ def ejercicio_1(image):
     print("--- EJERCICIO 1A - GAUSSIANA 2D Y MÁSCARAS 1D (getDerivKernels) ---")
     imprimir_imagenes_titulos([image, gaussian_blur(image, 2), gaussian_blur(image, 6)],
                               ['Original', 'σ_x = 2', 'σ_x = 6'], 1, 3, 'Gaussian')
-    imprimir_imagenes_titulos([image, gaussian_blur(image, 2, sigma_y=3, size=(5,5)), gaussian_blur(image, 6, sigma_y=4, size=(7,7))],
+    imprimir_imagenes_titulos([image, gaussian_blur(image, 2, sigma_y=3), gaussian_blur(image, 6, sigma_y=4)],
                               ['Original', 'σ_x = 2, σ_y = 3', 'σ_x = 6, σ_y = 4'], 1, 3, 'Gaussian')
+    imprimir_imagenes_titulos([gaussian_blur(image, 1, sigma_y=1, border_type=cv2.BORDER_DEFAULT), gaussian_blur(image, 1, sigma_y=1, border_type=cv2.BORDER_REPLICATE),
+                               gaussian_blur(image, 1, sigma_y=1, border_type=cv2.BORDER_REFLECT), gaussian_blur(image, 1, sigma_y=1, border_type=cv2.BORDER_CONSTANT)],
+                              ['BORDER_DEFAULT', 'BORDER_REPLICATE', 'BORDER_REFLECT', 'BORDER_CONSTANT'], 2, 2, 'Gaussian with borders')
 
     # Derivadas y tamaños de kernel a probar
-    ders = [(0,1), (0,2), (1,0), (1,1), (1,2), (2,0), (2,1), (2,2)]
     tams = [3, 5]
-
     for tam in tams:
-        print("tam = {}".format(tam))
-        for dx, dy in ders:
-            print("  dx = {}, dy = {}".format(dx, dy), end = ": ")
-            print("{}, {}".format(*map(np.transpose, derive_convolution(image, dx, dy, tam) )))  # Imprimo vectores fila
+        imprimir_imagenes_titulos([derive_convolution(image, 1, 0, tam), derive_convolution(image, 0, 1, tam), derive_convolution(image, 1, 1, tam), derive_convolution(image, 2, 0, tam),
+                                   derive_convolution(image, 0, 2, tam), derive_convolution(image, 2, 1, tam), derive_convolution(image, 1, 2, tam), derive_convolution(image, 2, 2, tam)],
+                                  ['(1, 0)', '(0, 1)', '(1, 1)', '(2, 0)', '(0, 2)', '(2, 1)', '(1, 2)', '(2, 2)'], 4, 4, 'Máscaras de derivadas 1D')
     input("Pulsa 'Enter' para continuar\n")
 
     print("--- EJERCICIO 1B -  LAPLACIANA DE GAUSSIANA ---")
@@ -212,22 +213,20 @@ def ejercicio_1(image):
     input("Pulsa 'Enter' para continuar\n")
 
 # EJERCICIO 2 #
-"""comentarlo"""
-def muestraMI(vim, titulo = "Imágenes"):
-  """Visualiza varias imágenes a la vez
-  - vim: Secuencia de imágenes"""
+"""Visualiza varias imágenes a la vez
+- image_list: Secuencia de imágenes"""
+def muestraMI(image_list, image_title = "Imágenes"):
+  altura = max(im.shape[0] for im in image_list)
 
-  altura = max(im.shape[0] for im in vim)
-
-  for i,im in enumerate(vim):
+  for i,im in enumerate(image_list):
     if im.shape[0] < altura: # Redimensionar imágenes
-      borde = int((altura - vim[i].shape[0])/2)
-      vim[i] = cv2.copyMakeBorder(
-        vim[i], borde, borde + (altura - vim[i].shape[0]) % 2,
+      borde = int((altura - image_list[i].shape[0])/2)
+      image_list[i] = cv2.copyMakeBorder(
+        image_list[i], borde, borde + (altura - image_list[i].shape[0]) % 2,
         0, 0, cv2.BORDER_CONSTANT, value = (0,0,0))
 
-  imMulti = cv2.hconcat(vim)
-  pintaI(titulo, imMulti)
+  im_concat = cv2.hconcat(image_list)
+  pintaI(image_title, im_concat)
 
 """Hace un subsampling de la imagen pasada como argumento. Devuelve la imagen recortada.
 - image: imagen a recortar"""
@@ -250,7 +249,7 @@ def subsampling(image):
 def gaussian_pyramid(image, levels = 4, border_type = cv2.BORDER_DEFAULT):
     pyramid = [image]
     for n in range(levels):
-        image = gaussian_blur(image, 1, 1, size = (3, 3), border_type = border_type)
+        image = gaussian_blur(image, 1, 1, ksize = (3, 3), border_type = border_type)
         image = subsampling(image)
         pyramid.append(image)
     return pyramid
@@ -305,7 +304,7 @@ def ejercicio_3(image):
 ################
 
 def main():
-    im_color = leer_imagen('data/plane.bmp', 1)   # Leemos la imagen en color
+    im_color = leer_imagen('data/cat.bmp', 1)   # Leemos la imagen en color
     ejercicio_1(im_color)
     ejercicio_2(im_color)
     #ejercicio_3(im_color)
