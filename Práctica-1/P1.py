@@ -197,7 +197,7 @@ def ejercicio_1(image):
                                gaussian_blur(image, 1, sigma_y=1, border_type=cv2.BORDER_REFLECT), gaussian_blur(image, 1, sigma_y=1, border_type=cv2.BORDER_CONSTANT)],
                               ['BORDER_DEFAULT', 'BORDER_REPLICATE', 'BORDER_REFLECT', 'BORDER_CONSTANT'], 2, 2, 'Gaussian with borders')
 
-    # Derivadas y tamaños de kernel a probar
+    # Máscaras de derivadas 1D
     tams = [3, 5]
     for tam in tams:
         imprimir_imagenes_titulos([derive_convolution(image, 1, 0, tam), derive_convolution(image, 0, 1, tam), derive_convolution(image, 1, 1, tam), derive_convolution(image, 2, 0, tam),
@@ -207,9 +207,9 @@ def ejercicio_1(image):
 
     print("--- EJERCICIO 1B -  LAPLACIANA DE GAUSSIANA ---")
     imprimir_imagenes_titulos([image, laplacian_gaussian(image, 1, border_type = cv2.BORDER_REPLICATE), laplacian_gaussian(image, 1, border_type = cv2.BORDER_CONSTANT)],
-                       ['Original', '1, REPLICATE', '1, REFLECT'], 1, 3, 'Laplacian of gaussian')
+                       ['Original', 'σ = 1, REPLICATE', 'σ = 1, REFLECT'], 1, 3, 'Laplacian of gaussian')
     imprimir_imagenes_titulos([image, laplacian_gaussian(image, 3, border_type = cv2.BORDER_REPLICATE), laplacian_gaussian(image, 3, border_type = cv2.BORDER_REFLECT)],
-                       ['Original', '3, REPLICATE', '3, REFLECT'], 1, 3, 'Laplacian of gaussian')
+                       ['Original', 'σ = 3, REPLICATE', 'σ = 3, REFLECT'], 1, 3, 'Laplacian of gaussian')
     input("Pulsa 'Enter' para continuar\n")
 
 # EJERCICIO 2 #
@@ -261,21 +261,36 @@ def gaussian_pyramid(image, levels = 4, border_type = cv2.BORDER_DEFAULT):
 """
 def laplacian_pyramid(image, levels = 4, border_type = cv2.BORDER_DEFAULT):
     gau_pyr = gaussian_pyramid(image, levels+1, border_type)
-    lap_pyr   = []
+    lap_pyr = []
     for n in range(levels):
         gau_n_1 = cv2.resize(gau_pyr[n+1], (gau_pyr[n].shape[1], gau_pyr[n].shape[0]), interpolation = cv2.INTER_CUBIC)
+        upsampling(gau_pyr[n+1], (gau_pyr[n].shape[1], gau_pyr[n].shape[0]))
         lap_pyr.append(cv2.subtract(gau_pyr[n], gau_n_1) + 64) # Resta al nivel n el nivel n+1 y suma una constante para visualizarlo
     return lap_pyr
+
+def piramideLaplaciana(vim):
+    result = []
+    for i in range(len(vim)-1):
+        v1 = int(vim[i].shape[0]/2)
+        v2 = int(vim[i].shape[1]/2)
+        upsample = np.copy(vim[i+1])
+        for j in range(v1):
+            upsample = np.insert(upsample,2*j+1,upsample[2*j,:],axis=0)
+        for j in range(v2):
+            upsample = np.insert(upsample,2*j+1,upsample[:,2*j],axis=1)
+        upsample = gaussiana2D(upsample,2)
+        result.append(vim[i]-upsample)
+    return result
 
 """Ejecución de ejemplos del ejercicio 2."""
 def ejercicio_2(image):
     print("--- EJERCICIO 2A - GAUSSIAN PYRAMID ---")
-    gau_pyr = gaussian_pyramid(image, 4)
+    gau_pyr = gaussian_pyramid(image, 4, cv2.BORDER_CONSTANT)
     muestraMI(gau_pyr, 'Pirámide gaussiana')
     input("Pulsa 'Enter' para continuar\n")
 
     print("--- EJERCICIO 2B - LAPLACIAN PYRAMID ---")
-    lap_pyr = laplacian_pyramid(image, 4)
+    lap_pyr = laplacian_pyramid(image, 4, cv2.BORDER_CONSTANT)
     muestraMI(lap_pyr, 'Pirámide laplaciana')
     input("Pulsa 'Enter' para continuar\n")
 
@@ -284,13 +299,28 @@ def ejercicio_2(image):
     #input("Pulsa 'Enter' para continuar\n")
 
 # EJERCICIO 3 #
-
-
+"""Construye una imagen híbrida con dos imagénes pasadas como argumento con el mismo tamaño.
+Devuelve un vector con la imgagen de frecuencias bajas, altas y la híbrida respectivamente.
+- im1, im2: Imágenes para frecuencias bajas y altas
+- sigma1, sigma2: Parámetros sigma para frecuencias bajas y altas"""
+def hybridize_images(im1, im2, sigma1, sigma2):
+    # Sacando las frecuencias a im1 usando alisado gaussiano
+    frec_bajas = gaussian_blur(im1, sigma1)
+    # Sacando las frecuencias altas a im2 restando alisado gaussiano
+    frec_altas = cv.subtract(im2, gaussian_blur(im2, sigma2))
+    # cv2.addWeighted calcula la suma ponderada de dos matrices (ponderaciones 0.5 para cada matriz)
+    return [frec_bajas, frec_altas, cv2.addWeighted(frec_bajas, 0.5, frec_altas, 0.5, 0)]
 
 """Ejecución de ejemplos del ejercicio 3."""
 def ejercicio_3(image):
     print("--- EJERCICIO 3 - NOMBRE ---")
+    im_a1, im_a2 = leeimagen(PATH + "bird.bmp", GRIS), leeimagen(PATH + "plane.bmp", GRIS)
+    im_b1, im_b2 = leeimagen(PATH + "bicycle.bmp", GRIS), leeimagen(PATH + "motorcycle.bmp", GRIS)
+    im_c1, im_c2 = leeimagen(PATH + "dog.bmp", GRIS), leeimagen(PATH + "cat.bmp", GRIS)
 
+    muestraMI(hybridize_images(im_a1, im_a2, 3, 5), "Avión - Pájaro")
+    muestraMI(hybridize_images(im_b1, im_b2, 9, 5), "Bicicleta - Moto")
+    muestraMI(hybridize_images(im_c1, im_c2, 9, 9), "Gato - Perro")
     input("Pulsa 'Enter' para continuar\n")
 
 #################
