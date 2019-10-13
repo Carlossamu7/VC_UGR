@@ -396,6 +396,18 @@ def bonus_2():
 
 def bonus_3():
     print("--- BONUS 3 - IMAGEN HÍBRIDA CON PAREJA EXTRAIDA A MI ELECCIÓN ---")
+    im_1, im_2 = leer_imagen("data/violin.png", 1), leer_imagen("data/guitarra.png", 1)
+    min_alt = min(im_1.shape[0], im_2.shape[0])
+    min_anc = min(im_1.shape[1], im_2.shape[1])
+    im_1 = cv2.resize(im_1, (min_anc, min_alt), im_1, interpolation = cv2.INTER_CUBIC)
+    im_2 = cv2.resize(im_2, (min_anc, min_alt), im_2, interpolation = cv2.INTER_CUBIC)
+
+    print(im_1.shape[0])
+    print(im_1.shape[1])
+    print(im_2.shape[0])
+    print(im_2.shape[1])
+    vim = hybridize_images(im_1, im_2, 3, 3)
+    muestraMI(vim, "Trompeta - Saxofón")
 
 
 
@@ -410,7 +422,7 @@ def main():
     #ejercicio_3()
     #bonus_1()
     bonus_2()
-    #bonus_3()
+    bonus_3()
 
 if __name__ == "__main__":
 	main()
