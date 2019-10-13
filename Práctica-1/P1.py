@@ -301,6 +301,7 @@ def ejercicio_2(image):
     #input("Pulsa 'Enter' para continuar\n")
 
 # EJERCICIO 3 #
+
 """Construye una imagen híbrida con dos imagénes pasadas como argumento con el mismo tamaño.
 Devuelve un vector con la imgagen de frecuencias bajas, altas y la híbrida respectivamente.
 - im1: Imagen para frecuencias bajas
@@ -335,8 +336,8 @@ def ejercicio_3():
 
     # Mostramos las hibridaciones
     muestraMI(vim_a, "Avión - Pájaro")
-    muestraMI(vim_b, "Bicicleta - Moto")
-    muestraMI(vim_c, "Gato - Perro")
+    muestraMI(vim_b, "Gato - Perro")
+    muestraMI(vim_c, "Bicicleta - Moto")
     #muestraMI(vim_d, "Pez - Submarino")
     #muestraMI(vim_e, "Einstein - Marilyn")
 
@@ -350,8 +351,8 @@ def ejercicio_3():
 
     # Imprimimos las pirámides gaussianas
     muestraMI(gau_pyr_a, 'Pirámide gaussiana Avión - Pájaro')
-    muestraMI(gau_pyr_b, 'Pirámide gaussiana Bicicleta - Moto')
-    muestraMI(gau_pyr_c, 'Pirámide gaussiana Gato - Perro')
+    muestraMI(gau_pyr_b, 'Pirámide gaussiana Gato - Perro')
+    muestraMI(gau_pyr_c, 'Pirámide gaussiana Bicicleta - Moto')
     #muestraMI(gau_pyr_d, 'Pirámide gaussiana Pez - Submarino')
     #muestraMI(gau_pyr_e, 'Pirámide gaussiana Einstein - Marilyn')
 
@@ -360,6 +361,41 @@ def ejercicio_3():
 #################
 ###   BONUS   ###
 #################
+
+# Bonus 1 #
+
+def bonus_1():
+    print("--- BONUS 1 - MÁSCARAS 2D CON CÓDIGO PROPIO. CUALQUIER MÁSCARA 2D DE NÚMEROS REALES USANDO MÁSCARAS SEPARABLES ---")
+
+# Bonus 2 #
+
+def bonus_2():
+    print("--- BONUS 2 - TODAS LAS PAREJAS DE IMÁGENES HÍBRIDAS EN FORMATO A COLOR ---")
+    # Leemos las imágenes en color
+    im_a1, im_a2 = leer_imagen("data/bird.bmp", 1), leer_imagen("data/plane.bmp", 1)
+    im_b1, im_b2 = leer_imagen("data/dog.bmp", 1), leer_imagen("data/cat.bmp", 1)
+    im_c1, im_c2 = leer_imagen("data/bicycle.bmp", 1), leer_imagen("data/motorcycle.bmp", 1)
+    im_d1, im_d2 = leer_imagen("data/fish.bmp", 1), leer_imagen("data/submarine.bmp", 1)
+    im_e1, im_e2 = leer_imagen("data/einstein.bmp", 1), leer_imagen("data/marilyn.bmp", 1)
+
+    # Hibridamos las imágenes
+    vim_a = hybridize_images(im_a1, im_a2, 3, 5)
+    vim_b = hybridize_images(im_b1, im_b2, 9, 9)
+    vim_c = hybridize_images(im_c1, im_c2, 9, 5)
+    vim_d = hybridize_images(im_d1, im_d2, 7, 7)
+    vim_e = hybridize_images(im_e1, im_e2, 3, 3)
+
+    # Mostramos las hibridaciones
+    muestraMI(vim_a, "Avión - Pájaro")
+    muestraMI(vim_b, "Gato - Perro")
+    muestraMI(vim_c, "Bicicleta - Moto")
+    muestraMI(vim_d, "Pez - Submarino")
+    muestraMI(vim_e, "Einstein - Marilyn")
+
+# Bonus 3 #
+
+def bonus_3():
+    print("--- BONUS 3 - IMAGEN HÍBRIDA CON PAREJA EXTRAIDA A MI ELECCIÓN ---")
 
 
 
@@ -371,7 +407,10 @@ def main():
     #im_color = leer_imagen('data/cat.bmp', 1)   # Leemos la imagen en color
     #ejercicio_1(im_color)
     #ejercicio_2(im_color)
-    ejercicio_3()
+    #ejercicio_3()
+    #bonus_1()
+    bonus_2()
+    #bonus_3()
 
 if __name__ == "__main__":
 	main()
