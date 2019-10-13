@@ -210,6 +210,7 @@ def ejercicio_1(image):
                        ['Original', 'σ = 1, REPLICATE', 'σ = 1, REFLECT'], 1, 3, 'Laplacian of gaussian')
     imprimir_imagenes_titulos([image, laplacian_gaussian(image, 3, border_type = cv2.BORDER_REPLICATE), laplacian_gaussian(image, 3, border_type = cv2.BORDER_REFLECT)],
                        ['Original', 'σ = 3, REPLICATE', 'σ = 3, REFLECT'], 1, 3, 'Laplacian of gaussian')
+
     input("Pulsa 'Enter' para continuar\n")
 
 # EJERCICIO 2 #
@@ -296,31 +297,64 @@ def ejercicio_2(image):
 
     #print("--- EJERCICIO 2C - ESPACIO DE ESCALAS LAPLACIANO ---")
 
+
     #input("Pulsa 'Enter' para continuar\n")
 
 # EJERCICIO 3 #
 """Construye una imagen híbrida con dos imagénes pasadas como argumento con el mismo tamaño.
 Devuelve un vector con la imgagen de frecuencias bajas, altas y la híbrida respectivamente.
-- im1, im2: Imágenes para frecuencias bajas y altas
-- sigma1, sigma2: Parámetros sigma para frecuencias bajas y altas"""
+- im1: Imagen para frecuencias bajas
+- im2: Imagen para frecuencias altas
+- sigma1: Parámetro sigma para la imagen de frecuencias bajas
+- sigma2: Parámetro sigma para la imagen de frecuencias altas"""
 def hybridize_images(im1, im2, sigma1, sigma2):
     # Sacando las frecuencias a im1 usando alisado gaussiano
     frec_bajas = gaussian_blur(im1, sigma1)
     # Sacando las frecuencias altas a im2 restando alisado gaussiano
-    frec_altas = cv.subtract(im2, gaussian_blur(im2, sigma2))
+    frec_altas = cv2.subtract(im2, gaussian_blur(im2, sigma2))
     # cv2.addWeighted calcula la suma ponderada de dos matrices (ponderaciones 0.5 para cada matriz)
     return [frec_bajas, frec_altas, cv2.addWeighted(frec_bajas, 0.5, frec_altas, 0.5, 0)]
 
 """Ejecución de ejemplos del ejercicio 3."""
-def ejercicio_3(image):
-    print("--- EJERCICIO 3 - NOMBRE ---")
-    im_a1, im_a2 = leeimagen(PATH + "bird.bmp", GRIS), leeimagen(PATH + "plane.bmp", GRIS)
-    im_b1, im_b2 = leeimagen(PATH + "bicycle.bmp", GRIS), leeimagen(PATH + "motorcycle.bmp", GRIS)
-    im_c1, im_c2 = leeimagen(PATH + "dog.bmp", GRIS), leeimagen(PATH + "cat.bmp", GRIS)
+def ejercicio_3():
+    print("--- EJERCICIO 3A - FUNCIÓN 'hybridize_images' IMPLEMENTADA ---")
+    print("--- EJERCICIO 3B - MOSTRANDO 3 PAREJAS DE IMÁGENES HIBRIDADAS ---")
+    # Leemos las imágenes en gris
+    im_a1, im_a2 = leer_imagen("data/bird.bmp", 0), leer_imagen("data/plane.bmp", 0)
+    im_b1, im_b2 = leer_imagen("data/dog.bmp", 0), leer_imagen("data/cat.bmp", 0)
+    im_c1, im_c2 = leer_imagen("data/bicycle.bmp", 0), leer_imagen("data/motorcycle.bmp", 0)
+    #im_d1, im_d2 = leer_imagen("data/fish.bmp", 0), leer_imagen("data/submarine.bmp", 0)
+    #im_e1, im_e2 = leer_imagen("data/einstein.bmp", 0), leer_imagen("data/marilyn.bmp", 0)
 
-    muestraMI(hybridize_images(im_a1, im_a2, 3, 5), "Avión - Pájaro")
-    muestraMI(hybridize_images(im_b1, im_b2, 9, 5), "Bicicleta - Moto")
-    muestraMI(hybridize_images(im_c1, im_c2, 9, 9), "Gato - Perro")
+    # Hibridamos las imágenes
+    vim_a = hybridize_images(im_a1, im_a2, 3, 5)
+    vim_b = hybridize_images(im_b1, im_b2, 9, 9)
+    vim_c = hybridize_images(im_c1, im_c2, 9, 5)
+    #vim_d = hybridize_images(im_d1, im_d2, 7, 7)
+    #vim_e = hybridize_images(im_e1, im_e2, 3, 3)
+
+    # Mostramos las hibridaciones
+    muestraMI(vim_a, "Avión - Pájaro")
+    muestraMI(vim_b, "Bicicleta - Moto")
+    muestraMI(vim_c, "Gato - Perro")
+    #muestraMI(vim_d, "Pez - Submarino")
+    #muestraMI(vim_e, "Einstein - Marilyn")
+
+    print("--- EJERCICIO 3C - MOSTRANDO PIRÁMIDES GAUSSIANAS DE LAS IMÁGENES HIBRIDADAS ---")
+    # Construimos las pirámides gaussianas
+    gau_pyr_a = gaussian_pyramid(vim_a[2], 4, cv2.BORDER_CONSTANT)
+    gau_pyr_b = gaussian_pyramid(vim_b[2], 4, cv2.BORDER_CONSTANT)
+    gau_pyr_c = gaussian_pyramid(vim_c[2], 4, cv2.BORDER_CONSTANT)
+    #gau_pyr_d = gaussian_pyramid(vim_d[2], 4, cv2.BORDER_CONSTANT)
+    #gau_pyr_e = gaussian_pyramid(vim_e[2], 4, cv2.BORDER_CONSTANT)
+
+    # Imprimimos las pirámides gaussianas
+    muestraMI(gau_pyr_a, 'Pirámide gaussiana Avión - Pájaro')
+    muestraMI(gau_pyr_b, 'Pirámide gaussiana Bicicleta - Moto')
+    muestraMI(gau_pyr_c, 'Pirámide gaussiana Gato - Perro')
+    #muestraMI(gau_pyr_d, 'Pirámide gaussiana Pez - Submarino')
+    #muestraMI(gau_pyr_e, 'Pirámide gaussiana Einstein - Marilyn')
+
     input("Pulsa 'Enter' para continuar\n")
 
 #################
@@ -334,10 +368,10 @@ def ejercicio_3(image):
 ################
 
 def main():
-    im_color = leer_imagen('data/cat.bmp', 1)   # Leemos la imagen en color
-    ejercicio_1(im_color)
-    ejercicio_2(im_color)
-    #ejercicio_3(im_color)
+    #im_color = leer_imagen('data/cat.bmp', 1)   # Leemos la imagen en color
+    #ejercicio_1(im_color)
+    #ejercicio_2(im_color)
+    ejercicio_3()
 
 if __name__ == "__main__":
 	main()
