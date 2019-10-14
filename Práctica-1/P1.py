@@ -393,7 +393,7 @@ def correl(mascara, orig):
 """Calcula el vector máscara gaussiano. Devuelve el vector máscara gaussiano.
 - sigma: Parámetro σ de la función de densidad de la gaussiana
 """
-def gaussian_vector()
+def gaussian_vector():
     longitud = 1 + 2*int(3*sigma) # Calcula la longitud
     mid = int(3*sigma)
 
@@ -484,7 +484,7 @@ def bonus_3(im_1, im_2, sigma_1, sigma_2, image_title):
 def main():
     im_color = leer_imagen('data/cat.bmp', 1)   # Leemos la imagen en color
     #ejercicio_1(im_color)
-    ejercicio_2(im_color)
+    #ejercicio_2(im_color)
     #ejercicio_3()
     #bonus_1()
     #bonus_2()
