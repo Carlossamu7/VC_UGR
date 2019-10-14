@@ -237,10 +237,30 @@ def subsampling(image):
     n_col = int(image.shape[1]/2)
     cp = np.copy(image)
 
-    for a in range(0,n_fil):
-        cp = np.delete(cp,a,axis = 0)
-    for a in range(0,n_col):
-        cp = np.delete(cp,a,axis = 1)
+    for a in range(0, n_fil):
+        cp = np.delete(cp, a, axis = 0)
+    for a in range(0, n_col):
+        cp = np.delete(cp, a, axis = 1)
+
+    return cp
+
+"""Hace un upsampling de la imagen pasada como argumento. Devuelve la imagen agrandada.
+- image: imagen a agrandar"""
+def upsampling(image, n_fil, n_col):
+    depth = image.shape[2]
+    cp = np.zeros((n_fil, n_col, depth))
+
+    for k in range(0, depth):
+        for i in range(0, n_fil):
+            if (i % 2) == 1:
+                for j in range(0, n_col):
+                    if (j % 2) == 1:
+                        cp[i][j][k] = image[int(i/2), int(j/2), k]
+                    else:
+                        cp[i][j][k] = image[0][0][0]-image[0][0][0]
+            else:
+                for j in range(0, n_col):
+                    cp[i][j][k] = image[0][0][0]-image[0][0][0]
 
     return cp
 
@@ -265,24 +285,13 @@ def laplacian_pyramid(image, levels = 4, border_type = cv2.BORDER_DEFAULT):
     gau_pyr = gaussian_pyramid(image, levels+1, border_type)
     lap_pyr = []
     for n in range(levels):
-        gau_n_1 = cv2.resize(gau_pyr[n+1], (gau_pyr[n].shape[1], gau_pyr[n].shape[0]), interpolation = cv2.INTER_CUBIC)
-        #upsampling(gau_pyr[n+1], (gau_pyr[n].shape[1], gau_pyr[n].shape[0]))
-        lap_pyr.append(cv2.subtract(gau_pyr[n], gau_n_1) + 64) # Resta al nivel n el nivel n+1 y suma una constante para visualizarlo
+        #gau_n_1 = cv2.resize(gau_pyr[n+1], (gau_pyr[n].shape[1], gau_pyr[n].shape[0]), interpolation = cv2.INTER_CUBIC)
+        gau_n_1 = upsampling(gau_pyr[n+1], gau_pyr[n].shape[0], gau_pyr[n].shape[1])
+        gau_n_1 = gau_n_1.astype(np.uint8)
+        gau_pyr[n] = gau_pyr[n].astype(np.uint8)
+        gau_n_1 = 4*gaussian_blur(gau_n_1, 5, 5)
+        lap_pyr.append(cv2.subtract(gau_pyr[n], gau_n_1)+32) # Resta al nivel n el nivel n+1 y sumo una constante para visualizarlo
     return lap_pyr
-
-def piramideLaplaciana(vim):
-    result = []
-    for i in range(len(vim)-1):
-        v1 = int(vim[i].shape[0]/2)
-        v2 = int(vim[i].shape[1]/2)
-        upsample = np.copy(vim[i+1])
-        for j in range(v1):
-            upsample = np.insert(upsample,2*j+1,upsample[2*j,:],axis=0)
-        for j in range(v2):
-            upsample = np.insert(upsample,2*j+1,upsample[:,2*j],axis=1)
-        upsample = gaussiana2D(upsample,2)
-        result.append(vim[i]-upsample)
-    return result
 
 """Ejecución de ejemplos del ejercicio 2."""
 def ejercicio_2(image):
@@ -381,16 +390,10 @@ def correl(mascara, orig):
         nueva[i] = np.dot(mascara, extended[i-M+N:i+M+N+1])
     return nueva
 
-"""Convolución 2D usando máscaras separables. Devuelve la imagen convolucionada.
-- vX: Vector-máscara en dirección X
-- vY: Vector-máscara en dirección Y
-- im: Imagen a convolucionar"""
-def bonus_1(vX, vY, im):
-    print("--- BONUS 1 - MÁSCARAS 2D CON CÓDIGO PROPIO. CUALQUIER MÁSCARA 2D DE NÚMEROS REALES USANDO MÁSCARAS SEPARABLES ---")
-
-    """Calcula el vector máscara gaussiano. Devuelve el vector máscara gaussiano.
-    - sigma: Parámetro σ de la función de densidad de la gaussiana
-    """
+"""Calcula el vector máscara gaussiano. Devuelve el vector máscara gaussiano.
+- sigma: Parámetro σ de la función de densidad de la gaussiana
+"""
+def gaussian_vector()
     longitud = 1 + 2*int(3*sigma) # Calcula la longitud
     mid = int(3*sigma)
 
@@ -402,9 +405,14 @@ def bonus_1(vX, vY, im):
         x = n - mid
         mascara[n] = f(x)
 
-    #return mascara/np.sum(mascara)
+    return mascara/np.sum(mascara)
 
-    #bonus 3
+"""Convolución 2D usando máscaras separables. Devuelve la imagen convolucionada.
+- vX: Vector-máscara en dirección X
+- vY: Vector-máscara en dirección Y
+- im: Imagen a convolucionar"""
+def bonus_1(vX, vY, im):
+    print("--- BONUS 1 - MÁSCARAS 2D CON CÓDIGO PROPIO. CUALQUIER MÁSCARA 2D DE NÚMEROS REALES USANDO MÁSCARAS SEPARABLES ---")
     if not isBW(im): # Si tiene 3 canales
       canales  = cv.split(im)
       return cv.merge([bonus3(vX, vY, canal) for canal in canales])
@@ -476,14 +484,14 @@ def bonus_3(im_1, im_2, sigma_1, sigma_2, image_title):
 def main():
     im_color = leer_imagen('data/cat.bmp', 1)   # Leemos la imagen en color
     #ejercicio_1(im_color)
-    #ejercicio_2(im_color)
+    ejercicio_2(im_color)
     #ejercicio_3()
     #bonus_1()
     #bonus_2()
-    im_1a, im_1b = leer_imagen("data/guitarra.png", 1), leer_imagen("data/violin.png", 1)
-    im_2a, im_2b = leer_imagen("data/trompeta.jpg", 1), leer_imagen("data/saxofon.jpg", 1)
-    bonus_3(im_1a, im_1b, 9, 9, "Guitarra - Violín")
-    bonus_3(im_2a, im_2b, 3, 7, "Trompeta - Saxofón")
+    #im_1a, im_1b = leer_imagen("data/guitarra.png", 1), leer_imagen("data/violin.png", 1)
+    #im_2a, im_2b = leer_imagen("data/trompeta.jpg", 1), leer_imagen("data/saxofon.jpg", 1)
+    #bonus_3(im_1a, im_1b, 9, 9, "Guitarra - Violín")
+    #bonus_3(im_2a, im_2b, 3, 7, "Trompeta - Saxofón")
 
 if __name__ == "__main__":
 	main()
