@@ -364,8 +364,69 @@ def ejercicio_3():
 
 # Bonus 1 #
 
-def bonus_1():
+"""Calcula correlación 1D de vector con señal. Devuelve la señal con correlación
+- mascara: vector-máscara
+- orig: Señal original"""
+def correl(mascara, orig):
+    if len(orig.shape) == 2: # si es multibanda
+        NCH = orig.shape[1]
+        return np.stack((bonus2(mascara, orig[::,j]) for j in range(NCH)), axis = 1)
+
+    nueva = np.zeros(orig.shape) # Crea nueva imagen
+    N, M = len(orig), (len(mascara)-1)//2
+    extended = np.concatenate((orig[::-1], orig, orig[::-1]))
+
+    for i in range(N):
+        nueva[i] = np.dot(mascara, extended[i-M+N:i+M+N+1])
+    return nueva
+
+  """Convolución 2D usando máscaras separables.   Devuelve la imagen convolucionada.
+ - vX: Vector-máscara en dirección X
+ - vY: Vector-máscara en dirección Y
+ - im: Imagen a convolucionar"""
+def bonus_1(vX, vY, im):
     print("--- BONUS 1 - MÁSCARAS 2D CON CÓDIGO PROPIO. CUALQUIER MÁSCARA 2D DE NÚMEROS REALES USANDO MÁSCARAS SEPARABLES ---")
+
+    """Calcula el vector máscara gaussiano. Devuelve el vector máscara gaussiano.
+    - sigma: Parámetro σ de la función de densidad de la gaussiana
+    """
+    longitud = 1 + 2*int(3*sigma) # Calcula la longitud
+    mid = int(3*sigma)
+
+    f = lambda x: math.exp(-0.5*x*x/(sigma*sigma))
+    mascara = np.zeros(longitud)
+
+    # Rellena la máscara muestreando
+    for n in range(longitud):
+        x = n - mid
+        mascara[n] = f(x)
+
+    return mascara/np.sum(mascara)
+
+    #bonus 3
+    if not isBW(im): # Si tiene 3 canales
+      canales  = cv.split(im)
+      return cv.merge([bonus3(vX, vY, canal) for canal in canales])
+
+    nueva = im.copy()
+    N, M = im.shape
+    rVX = vX[::-1]
+    rVY = vY[::-1]
+
+    for j in range(M): # Aplica convolución por columnas
+        nueva[::,j] = correl(rVX, nueva[::, j])
+    for i in range(N): # Aplica convolución por filas
+        nueva[i,::] = correl(rVY, nueva[i, ::])
+
+    return nueva
+
+
+def ejemploB123(im):
+  """Combina ejemplos para mostrar funcionalidad en ejercicios bonus 1, 2 y 3"""
+  vGauss = bonus1(1)
+  gauss  = bonus3(vGauss, vGauss, im)
+  pintaMI((im, "Original"), (gauss, "Gaussiana propia sigma = 3"))
+
 
 # Bonus 2 #
 
@@ -397,18 +458,17 @@ def bonus_2():
 def bonus_3():
     print("--- BONUS 3 - IMAGEN HÍBRIDA CON PAREJA EXTRAIDA A MI ELECCIÓN ---")
     im_1, im_2 = leer_imagen("data/violin.png", 1), leer_imagen("data/guitarra.png", 1)
+    #im_1, im_2 = leer_imagen("data/trompeta.jpg", 1), leer_imagen("data/saxofon.jpg", 1)
     min_alt = min(im_1.shape[0], im_2.shape[0])
     min_anc = min(im_1.shape[1], im_2.shape[1])
     im_1 = cv2.resize(im_1, (min_anc, min_alt), im_1, interpolation = cv2.INTER_CUBIC)
     im_2 = cv2.resize(im_2, (min_anc, min_alt), im_2, interpolation = cv2.INTER_CUBIC)
-
     print(im_1.shape[0])
     print(im_1.shape[1])
     print(im_2.shape[0])
     print(im_2.shape[1])
     vim = hybridize_images(im_1, im_2, 3, 3)
     muestraMI(vim, "Trompeta - Saxofón")
-
 
 
 ################
