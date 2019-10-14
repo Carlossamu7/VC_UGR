@@ -214,6 +214,7 @@ def ejercicio_1(image):
     input("Pulsa 'Enter' para continuar\n")
 
 # EJERCICIO 2 #
+
 """Visualiza varias imágenes a la vez
 - image_list: Secuencia de imágenes"""
 def muestraMI(image_list, image_title = "Imágenes"):
@@ -265,7 +266,7 @@ def laplacian_pyramid(image, levels = 4, border_type = cv2.BORDER_DEFAULT):
     lap_pyr = []
     for n in range(levels):
         gau_n_1 = cv2.resize(gau_pyr[n+1], (gau_pyr[n].shape[1], gau_pyr[n].shape[0]), interpolation = cv2.INTER_CUBIC)
-        upsampling(gau_pyr[n+1], (gau_pyr[n].shape[1], gau_pyr[n].shape[0]))
+        #upsampling(gau_pyr[n+1], (gau_pyr[n].shape[1], gau_pyr[n].shape[0]))
         lap_pyr.append(cv2.subtract(gau_pyr[n], gau_n_1) + 64) # Resta al nivel n el nivel n+1 y suma una constante para visualizarlo
     return lap_pyr
 
@@ -364,7 +365,7 @@ def ejercicio_3():
 
 # Bonus 1 #
 
-"""Calcula correlación 1D de vector con señal. Devuelve la señal con correlación
+"""Calcula correlación 1D de vector con señal. Devuelve la señal con correlación.
 - mascara: vector-máscara
 - orig: Señal original"""
 def correl(mascara, orig):
@@ -380,10 +381,10 @@ def correl(mascara, orig):
         nueva[i] = np.dot(mascara, extended[i-M+N:i+M+N+1])
     return nueva
 
-  """Convolución 2D usando máscaras separables.   Devuelve la imagen convolucionada.
- - vX: Vector-máscara en dirección X
- - vY: Vector-máscara en dirección Y
- - im: Imagen a convolucionar"""
+"""Convolución 2D usando máscaras separables. Devuelve la imagen convolucionada.
+- vX: Vector-máscara en dirección X
+- vY: Vector-máscara en dirección Y
+- im: Imagen a convolucionar"""
 def bonus_1(vX, vY, im):
     print("--- BONUS 1 - MÁSCARAS 2D CON CÓDIGO PROPIO. CUALQUIER MÁSCARA 2D DE NÚMEROS REALES USANDO MÁSCARAS SEPARABLES ---")
 
@@ -401,7 +402,7 @@ def bonus_1(vX, vY, im):
         x = n - mid
         mascara[n] = f(x)
 
-    return mascara/np.sum(mascara)
+    #return mascara/np.sum(mascara)
 
     #bonus 3
     if not isBW(im): # Si tiene 3 canales
@@ -455,20 +456,17 @@ def bonus_2():
 
 # Bonus 3 #
 
-def bonus_3():
-    print("--- BONUS 3 - IMAGEN HÍBRIDA CON PAREJA EXTRAIDA A MI ELECCIÓN ---")
-    im_1, im_2 = leer_imagen("data/violin.png", 1), leer_imagen("data/guitarra.png", 1)
-    #im_1, im_2 = leer_imagen("data/trompeta.jpg", 1), leer_imagen("data/saxofon.jpg", 1)
+def bonus_3(im_1, im_2, sigma_1, sigma_2, image_title):
+    print("--- BONUS 3 - IMAGEN HÍBRIDA CON ELECCIÓN DE PAREJA '" + image_title + "' ---")
+    # Las dos imágenes han de tener el mismo tamaño por lo que  calculo mínimos de ancho y alto
     min_alt = min(im_1.shape[0], im_2.shape[0])
+    # Hago resize a los mínimos de ambas imágenes porque una podría ser más ancha y la otra más alta.
     min_anc = min(im_1.shape[1], im_2.shape[1])
     im_1 = cv2.resize(im_1, (min_anc, min_alt), im_1, interpolation = cv2.INTER_CUBIC)
     im_2 = cv2.resize(im_2, (min_anc, min_alt), im_2, interpolation = cv2.INTER_CUBIC)
-    print(im_1.shape[0])
-    print(im_1.shape[1])
-    print(im_2.shape[0])
-    print(im_2.shape[1])
-    vim = hybridize_images(im_1, im_2, 3, 3)
-    muestraMI(vim, "Trompeta - Saxofón")
+    # Hibrido y muestro las imágenes
+    vim = hybridize_images(im_1, im_2, sigma_1, sigma_2)
+    muestraMI(vim, image_title)
 
 
 ################
@@ -476,13 +474,16 @@ def bonus_3():
 ################
 
 def main():
-    #im_color = leer_imagen('data/cat.bmp', 1)   # Leemos la imagen en color
+    im_color = leer_imagen('data/cat.bmp', 1)   # Leemos la imagen en color
     #ejercicio_1(im_color)
     #ejercicio_2(im_color)
     #ejercicio_3()
     #bonus_1()
-    bonus_2()
-    bonus_3()
+    #bonus_2()
+    im_1a, im_1b = leer_imagen("data/guitarra.png", 1), leer_imagen("data/violin.png", 1)
+    im_2a, im_2b = leer_imagen("data/trompeta.jpg", 1), leer_imagen("data/saxofon.jpg", 1)
+    bonus_3(im_1a, im_1b, 9, 9, "Guitarra - Violín")
+    bonus_3(im_2a, im_2b, 3, 7, "Trompeta - Saxofón")
 
 if __name__ == "__main__":
 	main()
