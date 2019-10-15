@@ -15,9 +15,9 @@ from matplotlib import pyplot as plt
 ###   Práctica 0 (Sólo lo que me interesa)   ###
 ################################################
 
-""" Lee una imagen ya sea en grises o en color
-- file_name: archivo de la imagen
-- flag_color: modo en el que se va a leer la imagen -> grises o color
+""" Lee una imagen ya sea en grises o en color. Devuelve la imagen.
+- file_name: archivo de la imagen.
+- flag_color (op): modo en el que se va a leer la imagen -> grises o color. Por defecto será en color.
 """
 def leer_imagen(file_name, flag_color = 1):
     if flag_color == 0:
@@ -30,8 +30,8 @@ def leer_imagen(file_name, flag_color = 1):
     img = cv2.imread(file_name, flag_color)
     return img
 
-""" Normaliza una matriz
-- image: matriz a normalizar
+""" Normaliza una matriz.
+- image: matriz a normalizar.
 """
 def normaliza(image):
     # En caso de que los máximos sean 255 o las mínimos 0 no iteramos en los  bucles
@@ -53,9 +53,9 @@ def normaliza(image):
                     for k in range(image.shape[2]):
                         image[i][j][k] = (image[i][j][k]-min[k])/(max[k]-min[k]) * 255
 
-""" Imprime una imagen a través de una matriz
-- image_title: título de la imagen
-- image: imagen a imprimir
+""" Imprime una imagen a través de una matriz.
+- image_title: título de la imagen.
+- image: imagen a imprimir.
 """
 def pintaI(image_title, image):
     normaliza(image)        # normalizamos la matriz
@@ -69,9 +69,9 @@ def pintaI(image_title, image):
     #cv2.waitKey(0)
     #cv2.destroyAllWindows()
 
-""" Lee una lista de imágenes ya sea en grises o en color
-- image_list: lista de imágenes a concatenar
-- flag_color: modo en el que se van a leer las imágenes
+""" Lee una lista de imágenes ya sea en grises o en color. Devuelve la lista de imágenes leída.
+- image_list: lista de imágenes a concatenar.
+- flag_color (op): modo en el que se van a leer las imágenes. Por defecto en color.
 """
 def leer_lista_imagenes(file_name_list, flag_color = 1):
     image_list = []
@@ -85,8 +85,8 @@ def leer_lista_imagenes(file_name_list, flag_color = 1):
 """ Las imágenes tienen que ser del mismo tipo ya que si no nos da el error:
         ValueError: all the input arrays must have same number of dimensions
     No es lo mismo la matriz de una imagen a color que necesita 3 dimensiones que una en grises
-- image_list: lista de imágenes a concatenar
-- horizontal: modo de concatenación. 0-vertical y en otro caso horizontal
+- image_list: lista de imágenes a concatenar.
+- horizontal (op): modo de concatenación. 0-vertical y en otro caso horizontal. Por defecto horizontal.
 """
 def pintaMI(image_list, horizontal=1):
     if horizontal != 0: # Salvo que sea 0-vertical, ponemos por defecto 1-horizontal.
@@ -100,8 +100,8 @@ def pintaMI(image_list, horizontal=1):
 
     pintaI("Imágenes concatenadas", concatenated_img)
 
-""" Escala las imágenes al mismo tamaño, al de la más pequeña
-- images: La lista de imágenes
+""" Escala las imágenes al mismo tamaño, al de la más pequeña. Devuelve la lista de imágenes escalada.
+- images: La lista de imágenes.
 """
 def escalar_imagenes(image_list):
     minRows = 999999999999
@@ -122,11 +122,11 @@ def escalar_imagenes(image_list):
 
     return image_list
 
-""" Muestra múltiples imágenes en una ventena Matplotlib
-- image_list: La lista de imágenes
-- image_title_list: Lista de títulos de las imágenes
-- rows: filas
-- columns: columnas
+""" Muestra múltiples imágenes en una ventena Matplotlib.
+- image_list: La lista de imágenes.
+- image_title_list: Lista de títulos de las imágenes.
+- rows: filas.
+- columns: columnas.
 """
 def imprimir_imagenes_titulos(image_list, image_title_list, rows, columns, window_title = 'Imágenes con títulos'):
     # Se igualan los tamaños de las Imagenes
@@ -150,12 +150,12 @@ def imprimir_imagenes_titulos(image_list, image_title_list, rows, columns, windo
 
 # EJERCICIO 1 #
 
-"""Aplica una máscara Gaussiana 2D. Devuelve la imagen con las máscara aplicada.
-- image: la imagen
-- sigma_x: sigma en la dirección X
-- sigma_y: sigma en la dirección X
-- ksize: tamaño del kernel (2D, positivos e impares). Si es (0,0) se obtiene a través de sigma
-- border_type: tipo de bordes
+""" Aplica una máscara Gaussiana 2D. Devuelve la imagen con las máscara aplicada.
+- image: la imagen.
+- sigma_x: sigma en la dirección X.
+- sigma_y (op): sigma en la dirección Y. Por defecto es 0.
+- ksize (op): tamaño del kernel (2D, positivos e impares). Por defecto es (0,0), se obtiene a través de sigma.
+- border_type (op): tipo de bordes. BORDER_DEFAULT.
 
 La clave es la función GaussianBlur de cv2:
 dst = cv.GaussianBlur(src, ksize, sigmaX[, dst[, sigmaY[, borderType=BORDER_DEFAULT]]] )
@@ -163,11 +163,11 @@ dst = cv.GaussianBlur(src, ksize, sigmaX[, dst[, sigmaY[, borderType=BORDER_DEFA
 def gaussian_blur(image, sigma_x, sigma_y = 0, ksize = (0,0), border_type = cv2.BORDER_DEFAULT):
     return cv2.GaussianBlur(image, ksize, sigma_x, sigmaY = sigma_y, borderType = border_type)
 
-"""Obtiene máscaras 1D de máscaras derivadas. Devuelve los vectores de derivada
+""" Obtiene máscaras 1D de máscaras derivadas. Devuelve los vectores de derivada
 Argumentos posicionales:
-- dx: orden de derivación respecto de x
-- dy: orden de derivación respecto de y
-- ksize: tamaño del kernel, puede ser 1, 3, 5, 7
+- dx: orden de derivación respecto de x.
+- dy: orden de derivación respecto de y.
+- ksize: tamaño del kernel, puede ser 1, 3, 5, 7.
 """
 def derive_convolution(image, dx, dy, ksize):
     print('Máscara de derivada con orden ({}, {}) y tamaño del kernel {}'.format(dx, dy, ksize))
@@ -175,18 +175,18 @@ def derive_convolution(image, dx, dy, ksize):
     image = cv2.sepFilter2D(image, -1, kx, ky)
     return image
 
-"""Aplica máscara laplaciana a imagen. Devuelve la imagen con la máscara aplicada
-- im: Imagen a la que aplicar la máscara
-- k_size: Tamaño de la máscara
-- size: tamaño del kernel
-- border_type: Tipo de borde
+""" Aplica máscara laplaciana a imagen. Devuelve la imagen con la máscara aplicada.
+- im: Imagen a la que aplicar la máscara.
+- k_size (op): Tamaño del kernel para Laplacian. Por defecto es 7.
+- size (op): tamaño del kernel para Gaussian. Por defecto (0,0).
+- border_type (op): Tipo de borde. Por defecto BORDER_DEFAULT.
 """
 def laplacian_gaussian(image, sigma = 0, k_size = 7, size = (0, 0), border_type = cv2.BORDER_DEFAULT):
   # Reducimos ruido con alisado gaussiano
   blur = gaussian_blur(image, sigma, ksize = size, border_type = border_type)
   return cv2.Laplacian(blur, -1, ksize = k_size, borderType = border_type, delta = 50)
 
-"""Ejecución de ejemplos del ejercicio 1 con diferentes σ."""
+""" Ejecución de ejemplos del ejercicio 1 con diferentes σ. """
 def ejercicio_1(image):
     print("--- EJERCICIO 1A - GAUSSIANA 2D Y MÁSCARAS 1D (getDerivKernels) ---")
     imprimir_imagenes_titulos([image, gaussian_blur(image, 2), gaussian_blur(image, 6)],
@@ -215,8 +215,9 @@ def ejercicio_1(image):
 
 # EJERCICIO 2 #
 
-"""Visualiza varias imágenes a la vez
-- image_list: Secuencia de imágenes"""
+""" Visualiza varias imágenes a la vez.
+- image_list: Secuencia de imágenes.
+"""
 def muestraMI(image_list, image_title = "Imágenes"):
   altura = max(im.shape[0] for im in image_list)
 
@@ -230,8 +231,9 @@ def muestraMI(image_list, image_title = "Imágenes"):
   im_concat = cv2.hconcat(image_list)
   pintaI(image_title, im_concat)
 
-"""Hace un subsampling de la imagen pasada como argumento. Devuelve la imagen recortada.
-- image: imagen a recortar"""
+""" Hace un subsampling de la imagen pasada como argumento. Devuelve la imagen recortada.
+- image: imagen a recortar.
+"""
 def subsampling(image):
     n_fil = int(image.shape[0]/2)
     n_col = int(image.shape[1]/2)
@@ -244,8 +246,9 @@ def subsampling(image):
 
     return cp
 
-"""Hace un upsampling de la imagen pasada como argumento. Devuelve la imagen agrandada.
-- image: imagen a agrandar"""
+""" Hace un upsampling de la imagen pasada como argumento. Devuelve la imagen agrandada.
+- image: imagen a agrandar.
+"""
 def upsampling(image, n_fil, n_col):
     depth = image.shape[2]
     cp = np.zeros((n_fil, n_col, depth))
@@ -264,10 +267,11 @@ def upsampling(image, n_fil, n_col):
 
     return cp
 
-"""Genera representación de pirámide gaussiana. Devuelve la lista de imágenes que forman la pirámide gaussiana
-- image: La imagen a la que generar la pirámide gaussiana
-- border_type: Tipo de borde a utilizar
-- levels: Número de niveles de la pirámide gaussiana (4 por defecto)"""
+""" Genera representación de pirámide gaussiana. Devuelve la lista de imágenes que forman la pirámide gaussiana.
+- image: La imagen a la que generar la pirámide gaussiana.
+- levels (op): Número de niveles de la pirámide gaussiana. Por defecto 4.
+- border_type (op): Tipo de borde a utilizar. Por defecto BORDER DEFAULT.
+"""
 def gaussian_pyramid(image, levels = 4, border_type = cv2.BORDER_DEFAULT):
     pyramid = [image]
     for n in range(levels):
@@ -276,10 +280,10 @@ def gaussian_pyramid(image, levels = 4, border_type = cv2.BORDER_DEFAULT):
         pyramid.append(image)
     return pyramid
 
-"""Genera representación de pirámide laplaciana. Devuelve la lista de imágenes que forman la pirámide laplaciana
-- image: La imagen a la que generar la pirámide laplaciana
-- border_type: Tipo de borde a utilizar
-- levels: Número de niveles de la pirámide laplaciana (4 por defecto)
+""" Genera representación de pirámide laplaciana. Devuelve la lista de imágenes que forman la pirámide laplaciana.
+- image: La imagen a la que generar la pirámide laplaciana.
+- levels (op): Número de niveles de la pirámide laplaciana. Por defecto 4.
+- border_type (op): Tipo de borde a utilizar. BORDER DEFAULT.
 """
 def laplacian_pyramid(image, levels = 4, border_type = cv2.BORDER_DEFAULT):
     gau_pyr = gaussian_pyramid(image, levels+1, border_type)
@@ -293,7 +297,7 @@ def laplacian_pyramid(image, levels = 4, border_type = cv2.BORDER_DEFAULT):
         lap_pyr.append(cv2.subtract(gau_pyr[n], gau_n_1)+32) # Resta al nivel n el nivel n+1 y sumo una constante para visualizarlo
     return lap_pyr
 
-"""Ejecución de ejemplos del ejercicio 2."""
+""" Ejecución de ejemplos del ejercicio 2. """
 def ejercicio_2(image):
     print("--- EJERCICIO 2A - GAUSSIAN PYRAMID ---")
     gau_pyr = gaussian_pyramid(image, 4, cv2.BORDER_CONSTANT)
@@ -305,19 +309,19 @@ def ejercicio_2(image):
     muestraMI(lap_pyr, 'Pirámide laplaciana')
     input("Pulsa 'Enter' para continuar\n")
 
-    #print("--- EJERCICIO 2C - ESPACIO DE ESCALAS LAPLACIANO ---")
+    print("--- EJERCICIO 2C - ESPACIO DE ESCALAS LAPLACIANO ---")
 
-
-    #input("Pulsa 'Enter' para continuar\n")
+    input("Pulsa 'Enter' para continuar\n")
 
 # EJERCICIO 3 #
 
 """Construye una imagen híbrida con dos imagénes pasadas como argumento con el mismo tamaño.
 Devuelve un vector con la imgagen de frecuencias bajas, altas y la híbrida respectivamente.
-- im1: Imagen para frecuencias bajas
-- im2: Imagen para frecuencias altas
-- sigma1: Parámetro sigma para la imagen de frecuencias bajas
-- sigma2: Parámetro sigma para la imagen de frecuencias altas"""
+- im1: Imagen para frecuencias bajas.
+- im2: Imagen para frecuencias altas.
+- sigma1: Parámetro sigma para la imagen de frecuencias bajas.
+- sigma2: Parámetro sigma para la imagen de frecuencias altas.
+"""
 def hybridize_images(im1, im2, sigma1, sigma2):
     # Sacando las frecuencias a im1 usando alisado gaussiano
     frec_bajas = gaussian_blur(im1, sigma1)
@@ -326,7 +330,7 @@ def hybridize_images(im1, im2, sigma1, sigma2):
     # cv2.addWeighted calcula la suma ponderada de dos matrices (ponderaciones 0.5 para cada matriz)
     return [frec_bajas, frec_altas, cv2.addWeighted(frec_bajas, 0.5, frec_altas, 0.5, 0)]
 
-"""Ejecución de ejemplos del ejercicio 3."""
+""" Ejecución de ejemplos del ejercicio 3. """
 def ejercicio_3():
     print("--- EJERCICIO 3A - FUNCIÓN 'hybridize_images' IMPLEMENTADA ---")
     print("--- EJERCICIO 3B - MOSTRANDO 3 PAREJAS DE IMÁGENES HIBRIDADAS ---")
@@ -374,9 +378,10 @@ def ejercicio_3():
 
 # Bonus 1 #
 
-"""Calcula correlación 1D de vector con señal. Devuelve la señal con correlación.
-- mascara: vector-máscara
-- orig: Señal original"""
+""" Calcula correlación 1D de vector con señal. Devuelve la señal con correlación.
+- mascara: vector-máscara.
+- orig: Señal original.
+"""
 def correl(mascara, orig):
     if len(orig.shape) == 2: # si es multibanda
         NCH = orig.shape[1]
@@ -391,9 +396,9 @@ def correl(mascara, orig):
     return nueva
 
 """Calcula el vector máscara gaussiano. Devuelve el vector máscara gaussiano.
-- sigma: Parámetro σ de la función de densidad de la gaussiana
+- sigma: Parámetro σ de la función de densidad de la gaussiana.
 """
-def gaussian_vector():
+def gaussian_vector(sigma):
     longitud = 1 + 2*int(3*sigma) # Calcula la longitud
     mid = int(3*sigma)
 
@@ -408,9 +413,10 @@ def gaussian_vector():
     return mascara/np.sum(mascara)
 
 """Convolución 2D usando máscaras separables. Devuelve la imagen convolucionada.
-- vX: Vector-máscara en dirección X
-- vY: Vector-máscara en dirección Y
-- im: Imagen a convolucionar"""
+- vX: Vector-máscara en dirección X.
+- vY: Vector-máscara en dirección Y.
+- im: Imagen a convolucionar.
+"""
 def bonus_1(vX, vY, im):
     print("--- BONUS 1 - MÁSCARAS 2D CON CÓDIGO PROPIO. CUALQUIER MÁSCARA 2D DE NÚMEROS REALES USANDO MÁSCARAS SEPARABLES ---")
     if not isBW(im): # Si tiene 3 canales
@@ -430,8 +436,8 @@ def bonus_1(vX, vY, im):
     return nueva
 
 
+""" Combina ejemplos para mostrar funcionalidad en ejercicios bonus 1, 2 y 3. """
 def ejemploB123(im):
-  """Combina ejemplos para mostrar funcionalidad en ejercicios bonus 1, 2 y 3"""
   vGauss = bonus1(1)
   gauss  = bonus3(vGauss, vGauss, im)
   pintaMI((im, "Original"), (gauss, "Gaussiana propia sigma = 3"))
@@ -439,6 +445,7 @@ def ejemploB123(im):
 
 # Bonus 2 #
 
+""" Ejecución del bonus 2. """
 def bonus_2():
     print("--- BONUS 2 - TODAS LAS PAREJAS DE IMÁGENES HÍBRIDAS EN FORMATO A COLOR ---")
     # Leemos las imágenes en color
@@ -464,6 +471,7 @@ def bonus_2():
 
 # Bonus 3 #
 
+""" Ejecución del bonus 3. """
 def bonus_3(im_1, im_2, sigma_1, sigma_2, image_title):
     print("--- BONUS 3 - IMAGEN HÍBRIDA CON ELECCIÓN DE PAREJA '" + image_title + "' ---")
     # Las dos imágenes han de tener el mismo tamaño por lo que  calculo mínimos de ancho y alto
@@ -483,8 +491,8 @@ def bonus_3(im_1, im_2, sigma_1, sigma_2, image_title):
 
 def main():
     im_color = leer_imagen('data/cat.bmp', 1)   # Leemos la imagen en color
-    #ejercicio_1(im_color)
-    #ejercicio_2(im_color)
+    ejercicio_1(im_color)
+    ejercicio_2(im_color)
     #ejercicio_3()
     #bonus_1()
     #bonus_2()
