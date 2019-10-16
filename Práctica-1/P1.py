@@ -186,8 +186,8 @@ def laplacian_gaussian(image, sigma = 0, k_size = 7, size = (0, 0), border_type 
   blur = gaussian_blur(image, sigma, ksize = size, border_type = border_type)
   return cv2.Laplacian(blur, -1, ksize = k_size, borderType = border_type, delta = 50)
 
-""" Ejecución de ejemplos del ejercicio 1 con diferentes σ. """
-def ejercicio_1(image):
+""" Ejecución de ejemplos del ejercicio 1A con diferentes σ y condiciones de contorno. """
+def ejercicio_1A(image):
     print("--- EJERCICIO 1A - GAUSSIANA 2D Y MÁSCARAS 1D (getDerivKernels) ---")
     imprimir_imagenes_titulos([image, gaussian_blur(image, 2), gaussian_blur(image, 6)],
                               ['Original', 'σ_x = 2', 'σ_x = 6'], 1, 3, 'Gaussian')
@@ -205,12 +205,13 @@ def ejercicio_1(image):
                                   ['(1, 0)', '(0, 1)', '(1, 1)', '(2, 0)', '(0, 2)', '(2, 1)', '(1, 2)', '(2, 2)'], 4, 4, 'Máscaras de derivadas 1D')
     input("Pulsa 'Enter' para continuar\n")
 
+""" Ejecución de ejemplos del ejercicio 1B con σ=1 y σ=3 y dos tipos de bordes """
+def ejercicio_1B(image):
     print("--- EJERCICIO 1B -  LAPLACIANA DE GAUSSIANA ---")
     imprimir_imagenes_titulos([image, laplacian_gaussian(image, 1, border_type = cv2.BORDER_REPLICATE), laplacian_gaussian(image, 1, border_type = cv2.BORDER_CONSTANT)],
                        ['Original', 'σ = 1, REPLICATE', 'σ = 1, REFLECT'], 1, 3, 'Laplacian of gaussian')
     imprimir_imagenes_titulos([image, laplacian_gaussian(image, 3, border_type = cv2.BORDER_REPLICATE), laplacian_gaussian(image, 3, border_type = cv2.BORDER_REFLECT)],
                        ['Original', 'σ = 3, REPLICATE', 'σ = 3, REFLECT'], 1, 3, 'Laplacian of gaussian')
-
     input("Pulsa 'Enter' para continuar\n")
 
 # EJERCICIO 2 #
@@ -297,18 +298,22 @@ def laplacian_pyramid(image, levels = 4, border_type = cv2.BORDER_DEFAULT):
         lap_pyr.append(cv2.subtract(gau_pyr[n], gau_n_1)+32) # Resta al nivel n el nivel n+1 y sumo una constante para visualizarlo
     return lap_pyr
 
-""" Ejecución de ejemplos del ejercicio 2. """
-def ejercicio_2(image):
+""" Ejecución de ejemplos del ejercicio 2A. """
+def ejercicio_2A(image):
     print("--- EJERCICIO 2A - GAUSSIAN PYRAMID ---")
     gau_pyr = gaussian_pyramid(image, 4, cv2.BORDER_CONSTANT)
     muestraMI(gau_pyr, 'Pirámide gaussiana')
     input("Pulsa 'Enter' para continuar\n")
 
+""" Ejecución de ejemplos del ejercicio 2B. """
+def ejercicio_2B(image):
     print("--- EJERCICIO 2B - LAPLACIAN PYRAMID ---")
     lap_pyr = laplacian_pyramid(image, 4, cv2.BORDER_CONSTANT)
     muestraMI(lap_pyr, 'Pirámide laplaciana')
     input("Pulsa 'Enter' para continuar\n")
 
+""" Ejecución de ejemplos del ejercicio 2C. """
+def ejercicio_2C(image):
     print("--- EJERCICIO 2C - ESPACIO DE ESCALAS LAPLACIANO ---")
 
     input("Pulsa 'Enter' para continuar\n")
@@ -330,47 +335,18 @@ def hybridize_images(im1, im2, sigma1, sigma2):
     # cv2.addWeighted calcula la suma ponderada de dos matrices (ponderaciones 0.5 para cada matriz)
     return [frec_bajas, frec_altas, cv2.addWeighted(frec_bajas, 0.5, frec_altas, 0.5, 0)]
 
-""" Ejecución de ejemplos del ejercicio 3. """
-def ejercicio_3():
-    print("--- EJERCICIO 3A - FUNCIÓN 'hybridize_images' IMPLEMENTADA ---")
-    print("--- EJERCICIO 3B - MOSTRANDO 3 PAREJAS DE IMÁGENES HIBRIDADAS ---")
-    # Leemos las imágenes en gris
-    im_a1, im_a2 = leer_imagen("data/bird.bmp", 0), leer_imagen("data/plane.bmp", 0)
-    im_b1, im_b2 = leer_imagen("data/dog.bmp", 0), leer_imagen("data/cat.bmp", 0)
-    im_c1, im_c2 = leer_imagen("data/bicycle.bmp", 0), leer_imagen("data/motorcycle.bmp", 0)
-    #im_d1, im_d2 = leer_imagen("data/fish.bmp", 0), leer_imagen("data/submarine.bmp", 0)
-    #im_e1, im_e2 = leer_imagen("data/einstein.bmp", 0), leer_imagen("data/marilyn.bmp", 0)
+""" Ejecución de ejemplos del ejercicio 3B. """
+def ejercicio_3B(im_1, im_2, sigma1, sigma2, title = "Hibridación de imágenes"):
+    vim = hybridize_images(im_1, im_2, sigma1, sigma2)  # Hibridamos las imágenes
+    muestraMI(vim, title)                               # Mostramos las hibridaciones
+    return vim
 
-    # Hibridamos las imágenes
-    vim_a = hybridize_images(im_a1, im_a2, 3, 5)
-    vim_b = hybridize_images(im_b1, im_b2, 9, 9)
-    vim_c = hybridize_images(im_c1, im_c2, 9, 5)
-    #vim_d = hybridize_images(im_d1, im_d2, 7, 7)
-    #vim_e = hybridize_images(im_e1, im_e2, 3, 3)
+""" Ejecución de ejemplos del ejercicio 3C. """
+def ejercicio_3C(vim, title = "Pirámide gaussiana de la hibridada", levels = 4, border_type = cv2.BORDER_CONSTANT):
+    gau_pyr = gaussian_pyramid(vim[2], 4, border_type)  # Construimos las pirámides gaussianas
+    muestraMI(gau_pyr, title)                           # Imprimimos las pirámides gaussianas
+    return gau_pyr
 
-    # Mostramos las hibridaciones
-    muestraMI(vim_a, "Avión - Pájaro")
-    muestraMI(vim_b, "Gato - Perro")
-    muestraMI(vim_c, "Bicicleta - Moto")
-    #muestraMI(vim_d, "Pez - Submarino")
-    #muestraMI(vim_e, "Einstein - Marilyn")
-
-    print("--- EJERCICIO 3C - MOSTRANDO PIRÁMIDES GAUSSIANAS DE LAS IMÁGENES HIBRIDADAS ---")
-    # Construimos las pirámides gaussianas
-    gau_pyr_a = gaussian_pyramid(vim_a[2], 4, cv2.BORDER_CONSTANT)
-    gau_pyr_b = gaussian_pyramid(vim_b[2], 4, cv2.BORDER_CONSTANT)
-    gau_pyr_c = gaussian_pyramid(vim_c[2], 4, cv2.BORDER_CONSTANT)
-    #gau_pyr_d = gaussian_pyramid(vim_d[2], 4, cv2.BORDER_CONSTANT)
-    #gau_pyr_e = gaussian_pyramid(vim_e[2], 4, cv2.BORDER_CONSTANT)
-
-    # Imprimimos las pirámides gaussianas
-    muestraMI(gau_pyr_a, 'Pirámide gaussiana Avión - Pájaro')
-    muestraMI(gau_pyr_b, 'Pirámide gaussiana Gato - Perro')
-    muestraMI(gau_pyr_c, 'Pirámide gaussiana Bicicleta - Moto')
-    #muestraMI(gau_pyr_d, 'Pirámide gaussiana Pez - Submarino')
-    #muestraMI(gau_pyr_e, 'Pirámide gaussiana Einstein - Marilyn')
-
-    input("Pulsa 'Enter' para continuar\n")
 
 #################
 ###   BONUS   ###
@@ -469,6 +445,8 @@ def bonus_2():
     muestraMI(vim_d, "Pez - Submarino")
     muestraMI(vim_e, "Einstein - Marilyn")
 
+    input("Pulsa 'Enter' para continuar\n")
+
 # Bonus 3 #
 
 """ Ejecución del bonus 3. """
@@ -484,16 +462,50 @@ def bonus_3(im_1, im_2, sigma_1, sigma_2, image_title):
     vim = hybridize_images(im_1, im_2, sigma_1, sigma_2)
     muestraMI(vim, image_title)
 
+    input("Pulsa 'Enter' para continuar\n")
+
 
 ################
 ###   MAIN   ###
 ################
 
 def main():
-    im_color = leer_imagen('data/cat.bmp', 1)   # Leemos la imagen en color
-    ejercicio_1(im_color)
-    ejercicio_2(im_color)
-    #ejercicio_3()
+    im_cat_c = leer_imagen('data/cat.bmp', 1)   # Leemos la imagen en color
+
+    #ejercicio_1A(im_cat_c)
+    #ejercicio_1B(im_cat_c)
+
+    #ejercicio_2A(im_cat_c)
+    #ejercicio_2B(im_cat_c)
+    ejercicio_2C(im_cat_c)
+
+    print("--- EJERCICIO 3A - FUNCIÓN 'hybridize_images' IMPLEMENTADA ---")
+
+    print("--- EJERCICIO 3B - MOSTRANDO PAREJAS DE IMÁGENES HIBRIDADAS ---")
+
+    # Leemos las imágenes en gris
+    im_bird_g, im_plane_g = leer_imagen("data/bird.bmp", 0), leer_imagen("data/plane.bmp", 0)
+    im_dog_g, im_cat_g = leer_imagen("data/dog.bmp", 0), leer_imagen("data/cat.bmp", 0)
+    im_bicycle_g, im_motorcycle_g = leer_imagen("data/bicycle.bmp", 0), leer_imagen("data/motorcycle.bmp", 0)
+    #im_fish_g, im_submarine_g = leer_imagen("data/fish.bmp", 0), leer_imagen("data/submarine.bmp", 0)
+    #im_einstein_g, im_marilyn_g = leer_imagen("data/einstein.bmp", 0), leer_imagen("data/marilyn.bmp", 0)
+
+    # Ejecución de la hibridación y mostrado de imágenes
+    vim_1 = ejercicio_3B(im_bird_g, im_plane_g, 3, 5, "Avión - Pájaro")
+    vim_2 = ejercicio_3B(im_dog_g, im_cat_g, 9, 9, "Gato - Perro")
+    vim_3 = ejercicio_3B(im_fish_g, im_submarine_g, 7, 7, "Pez - Submarino")
+    #vim_4 = ejercicio_3B(im_bicycle_g, im_motorcycle_g, 9, 5, "Bicicleta - Moto")
+    #vim_5 = ejercicio_3B(im_einstein_g, im_marilyn_g, 3, 3, "Einstein - Marilyn")
+    input("Pulsa 'Enter' para continuar\n")
+
+    print("--- EJERCICIO 3C - MOSTRANDO PIRÁMIDES GAUSSIANAS DE LAS IMÁGENES HIBRIDADAS ---")
+    ejercicio_3C(vim_1, "Pirámide gaussiana Avión - Pájaro")
+    ejercicio_3C(vim_2, "Pirámide gaussiana Gato - Perro")
+    ejercicio_3C(vim_3, "Pirámide gaussiana Bicicleta - Moto")
+    #ejercicio_3C(vim_4, "Pirámide gaussiana Pez - Submarino")
+    #ejercicio_3C(vim_5, "Pirámide gaussiana Einstein - Marilyn")
+    input("Pulsa 'Enter' para continuar\n")
+
     #bonus_1()
     #bonus_2()
     #im_1a, im_1b = leer_imagen("data/guitarra.png", 1), leer_imagen("data/violin.png", 1)
