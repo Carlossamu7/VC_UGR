@@ -261,10 +261,10 @@ def upsampling(image, n_fil, n_col):
                     if (j % 2) == 1:
                         cp[i][j][k] = image[int(i/2), int(j/2), k]
                     else:
-                        cp[i][j][k] = image[0][0][0]-image[0][0][0]
+                        cp[i][j][k] = 0
             else:
                 for j in range(0, n_col):
-                    cp[i][j][k] = image[0][0][0]-image[0][0][0]
+                    cp[i][j][k] = 0
 
     return cp
 
@@ -476,7 +476,7 @@ def main():
     #ejercicio_1B(im_cat_c)
 
     #ejercicio_2A(im_cat_c)
-    #ejercicio_2B(im_cat_c)
+    ejercicio_2B(im_cat_c)
     ejercicio_2C(im_cat_c)
 
     print("--- EJERCICIO 3A - FUNCIÓN 'hybridize_images' IMPLEMENTADA ---")
