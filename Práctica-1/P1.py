@@ -28,7 +28,9 @@ def leer_imagen(file_name, flag_color = 1):
         print('flag_color debe ser 0 o 1')
 
     img = cv2.imread(file_name, flag_color)
-    return img
+    imgrgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    imgrgb.astype(np.float64)
+    return imgrgb
 
 """ Normaliza una matriz.
 - image: matriz a normalizar.
@@ -58,10 +60,23 @@ def normaliza(image):
 - image: imagen a imprimir.
 """
 def pintaI(image_title, image):
+    max = np.amax(image)
+    min = np.amin(image)
+    print(image)
+    print(max)
+    print(min)
+
     normaliza(image)        # normalizamos la matriz
-    imgrgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+    max = np.amax(image)
+    min = np.amin(image)
+    print(image)
+    print(max)
+    print(min)
+
+    image.astype(np.uint8)
     plt.figure(0).canvas.set_window_title("Ejercicio")  # Ponemos nombre a la ventana
-    plt.imshow(imgrgb)
+    plt.imshow(image)
     plt.title(image_title)  # Ponemos nombre a la imagen
     plt.show()
 
@@ -100,28 +115,6 @@ def pintaMI(image_list, horizontal=1):
 
     pintaI("Imágenes concatenadas", concatenated_img)
 
-""" Escala las imágenes al mismo tamaño, al de la más pequeña. Devuelve la lista de imágenes escalada.
-- images: La lista de imágenes.
-"""
-def escalar_imagenes(image_list):
-    minRows = 999999999999
-    minCols = 999999999999
-
-    # Se obtiene el minimo ancho y alto
-    for i in range(len(image_list)):
-        img = image_list[i]
-        if(len(img) < minRows):
-            minRows = len(img)
-        if(len(img[0]) < minCols):
-            minCols = len(img[0])
-
-    # Ajustamos las imágenes a la más pequeña
-    for i in range(len(image_list)):
-        img = image_list[i]
-        image_list[i] = cv2.resize(img, (minRows, minCols))
-
-    return image_list
-
 """ Muestra múltiples imágenes en una ventena Matplotlib.
 - image_list: La lista de imágenes.
 - image_title_list: Lista de títulos de las imágenes.
@@ -130,15 +123,27 @@ def escalar_imagenes(image_list):
 """
 def imprimir_imagenes_titulos(image_list, image_title_list, rows, columns, window_title = 'Imágenes con títulos'):
     # Se igualan los tamaños de las Imagenes
-    image_list = escalar_imagenes(image_list)
     fig = plt.figure(0)
     fig.canvas.set_window_title(window_title)
+
+    max = np.amax(image_list[0])
+    min = np.amin(image_list[0])
+    print(image_list[0])
+    print(max)
+    print(min)
+    for i in range(len(image_list)):
+        normaliza(image_list[i])
+        image_list[i].astype(np.uint8)
+    max = np.amax(image_list[0])
+    min = np.amin(image_list[0])
+    print(image_list[0])
+    print(max)
+    print(min)
 
     for i in range(rows * columns):
         if i < len(image_list):
             plt.subplot(rows, columns, i+1) # El índice (3er parametro) comienza en 1 en la esquina superior izquierda y aumenta a la derecha.
-            imgrgb = cv2.cvtColor(image_list[i], cv2.COLOR_BGR2RGB)
-            plt.imshow(imgrgb)
+            plt.imshow(image_list[i])
             plt.title(image_title_list[i])
             plt.xticks([])  # Se le pasa una lista de posiciones en las que se deben colocar los
             plt.yticks([])  # ticks, si pasamos una lista vacía deshabilitamos los xticks e yticks
@@ -160,19 +165,38 @@ def imprimir_imagenes_titulos(image_list, image_title_list, rows, columns, windo
 La clave es la función GaussianBlur de cv2:
 dst = cv.GaussianBlur(src, ksize, sigmaX[, dst[, sigmaY[, borderType=BORDER_DEFAULT]]] )
 """
-def gaussian_blur(image, sigma_x, sigma_y = 0, ksize = (0,0), border_type = cv2.BORDER_DEFAULT):
+def gaussian_blur_original(image, sigma_x, sigma_y = 0, ksize = (0,0), border_type = cv2.BORDER_DEFAULT):
     return cv2.GaussianBlur(image, ksize, sigma_x, sigmaY = sigma_y, borderType = border_type)
+
+def convolution(image, kernel_x, kernel_y, border_type = cv2.BORDER_DEFAULT):
+    kernel_x = np.transpose(kernel_x)
+    kernel_x = cv2.flip(kernel_x, 0)
+    kernel_y = cv2.flip(kernel_y, 1)
+    image = cv2.filter2D(image, -1, kernel_x, borderType = border_type)
+    image = cv2.filter2D(image, -1, kernel_y, borderType = border_type)
+    return image
+
+def gaussian_blur(image, sigma_x, sigma_y, k_size_x = 0, k_size_y = 0, border_type = cv2.BORDER_DEFAULT):
+    if k_size_x == 0:
+        k_size_x = int(6*sigma_x + 1)
+    if k_size_y == 0:
+        k_size_y = int(6*sigma_y + 1)
+
+    kernel_x = cv2.getGaussianKernel(k_size_x, sigma_x)
+    kernel_y = cv2.getGaussianKernel(k_size_y, sigma_y)
+    return convolution(image, kernel_x, kernel_y, border_type)
 
 """ Obtiene máscaras 1D de máscaras derivadas. Devuelve los vectores de derivada
 Argumentos posicionales:
 - dx: orden de derivación respecto de x.
 - dy: orden de derivación respecto de y.
-- ksize: tamaño del kernel, puede ser 1, 3, 5, 7.
+- k_size: tamaño del kernel, puede ser 1, 3, 5, 7.
+- border_type (op): tipo de bordes. BORDER_DEFAULT.
 """
-def derive_convolution(image, dx, dy, ksize):
-    print('Máscara de derivada con orden ({}, {}) y tamaño del kernel {}'.format(dx, dy, ksize))
-    kx, ky = cv2.getDerivKernels(dx,dy,ksize)
-    image = cv2.sepFilter2D(image, -1, kx, ky)
+def derive_convolution(image, dx, dy, k_size, border_type = cv2.BORDER_DEFAULT):
+    print('Máscara de derivada con orden ({}, {}) y tamaño del kernel {}'.format(dx, dy, k_size))
+    kx, ky = cv2.getDerivKernels(dx,dy,k_size)
+    image = convolution(image, kx, ky, border_type)
     return image
 
 """ Aplica máscara laplaciana a imagen. Devuelve la imagen con la máscara aplicada.
@@ -181,20 +205,27 @@ def derive_convolution(image, dx, dy, ksize):
 - size (op): tamaño del kernel para Gaussian. Por defecto (0,0).
 - border_type (op): Tipo de borde. Por defecto BORDER_DEFAULT.
 """
-def laplacian_gaussian(image, sigma = 0, k_size = 7, size = (0, 0), border_type = cv2.BORDER_DEFAULT):
-  # Reducimos ruido con alisado gaussiano
-  blur = gaussian_blur(image, sigma, ksize = size, border_type = border_type)
-  return cv2.Laplacian(blur, -1, ksize = k_size, borderType = border_type, delta = 50)
+def laplacian_gaussian_original(image, sigma = 0, k_size = 7, border_type = cv2.BORDER_DEFAULT):
+    # Reducimos ruido con alisado gaussiano
+    blur = gaussian_blur(image, sigma, ksize = size, border_type = border_type)
+    return cv2.Laplacian(blur, -1, ksize = k_size, borderType = border_type, delta = 50)
+
+def laplacian_gaussian(image, sigma = 0, k_size = 5, size = (0, 0), border_type = cv2.BORDER_DEFAULT):
+    k_x1, k_y1 = cv2.getDerivKernels(2, 0, k_size)
+    k_x2, k_y2 = cv2.getDerivKernels(0, 2, k_size)
+    im_convolution_x = convolution(image, k_x1, k_y1, border_type)
+    im_convolution_y = convolution(image, k_x2, k_y2, border_type)
+    return cv2.addWeighted(im_convolution_x, 1, im_convolution_y, 1, 0)
 
 """ Ejecución de ejemplos del ejercicio 1A con diferentes σ y condiciones de contorno. """
 def ejercicio_1A(image):
     print("--- EJERCICIO 1A - GAUSSIANA 2D Y MÁSCARAS 1D (getDerivKernels) ---")
-    imprimir_imagenes_titulos([image, gaussian_blur(image, 2), gaussian_blur(image, 6)],
+    imprimir_imagenes_titulos([image, gaussian_blur(image, 2, 2, 5, 5), gaussian_blur(image, 6, 6, 7, 7)],
                               ['Original', 'σ_x = 2', 'σ_x = 6'], 1, 3, 'Gaussian')
-    imprimir_imagenes_titulos([image, gaussian_blur(image, 2, sigma_y=3), gaussian_blur(image, 6, sigma_y=4)],
+    imprimir_imagenes_titulos([image, gaussian_blur(image, 2, 3, 5, 5), gaussian_blur(image, 6, 4, 5, 5)],
                               ['Original', 'σ_x = 2, σ_y = 3', 'σ_x = 6, σ_y = 4'], 1, 3, 'Gaussian')
-    imprimir_imagenes_titulos([gaussian_blur(image, 1, sigma_y=1, border_type=cv2.BORDER_DEFAULT), gaussian_blur(image, 1, sigma_y=1, border_type=cv2.BORDER_REPLICATE),
-                               gaussian_blur(image, 1, sigma_y=1, border_type=cv2.BORDER_REFLECT), gaussian_blur(image, 1, sigma_y=1, border_type=cv2.BORDER_CONSTANT)],
+    imprimir_imagenes_titulos([gaussian_blur(image, 1, 1, 5, 5, border_type=cv2.BORDER_DEFAULT), gaussian_blur(image, 1, 1, 5, 5, border_type=cv2.BORDER_REPLICATE),
+                               gaussian_blur(image, 1, 1, 5, 5, border_type=cv2.BORDER_REFLECT), gaussian_blur(image, 1, 1, 5, 5, border_type=cv2.BORDER_CONSTANT)],
                               ['BORDER_DEFAULT', 'BORDER_REPLICATE', 'BORDER_REFLECT', 'BORDER_CONSTANT'], 2, 2, 'Gaussian with borders')
 
     # Máscaras de derivadas 1D
@@ -202,7 +233,7 @@ def ejercicio_1A(image):
     for tam in tams:
         imprimir_imagenes_titulos([derive_convolution(image, 1, 0, tam), derive_convolution(image, 0, 1, tam), derive_convolution(image, 1, 1, tam), derive_convolution(image, 2, 0, tam),
                                    derive_convolution(image, 0, 2, tam), derive_convolution(image, 2, 1, tam), derive_convolution(image, 1, 2, tam), derive_convolution(image, 2, 2, tam)],
-                                  ['(1, 0)', '(0, 1)', '(1, 1)', '(2, 0)', '(0, 2)', '(2, 1)', '(1, 2)', '(2, 2)'], 4, 4, 'Máscaras de derivadas 1D')
+                                  ['(1, 0)', '(0, 1)', '(1, 1)', '(2, 0)', '(0, 2)', '(2, 1)', '(1, 2)', '(2, 2)'], 3, 3, 'Máscaras de derivadas 1D')
     input("Pulsa 'Enter' para continuar\n")
 
 """ Ejecución de ejemplos del ejercicio 1B con σ=1 y σ=3 y dos tipos de bordes """
@@ -273,10 +304,10 @@ def upsampling(image, n_fil, n_col):
 - levels (op): Número de niveles de la pirámide gaussiana. Por defecto 4.
 - border_type (op): Tipo de borde a utilizar. Por defecto BORDER DEFAULT.
 """
-def gaussian_pyramid(image, levels = 4, border_type = cv2.BORDER_DEFAULT):
+def gaussian_pyramid(image, levels = 4, border_type = cv2.BORDER_CONSTANT):
     pyramid = [image]
     for n in range(levels):
-        image = gaussian_blur(image, 1, 1, ksize = (3, 3), border_type = border_type)
+        image = gaussian_blur(image, 1, 1, 3, 3, border_type = border_type)
         image = subsampling(image)
         pyramid.append(image)
     return pyramid
@@ -315,6 +346,8 @@ def ejercicio_2B(image):
 """ Ejecución de ejemplos del ejercicio 2C. """
 def ejercicio_2C(image):
     print("--- EJERCICIO 2C - ESPACIO DE ESCALAS LAPLACIANO ---")
+    sigma = 1
+    N = 4
 
     input("Pulsa 'Enter' para continuar\n")
 
@@ -329,9 +362,9 @@ Devuelve un vector con la imgagen de frecuencias bajas, altas y la híbrida resp
 """
 def hybridize_images(im1, im2, sigma1, sigma2):
     # Sacando las frecuencias a im1 usando alisado gaussiano
-    frec_bajas = gaussian_blur(im1, sigma1)
+    frec_bajas = gaussian_blur(im1, sigma1, sigma1)
     # Sacando las frecuencias altas a im2 restando alisado gaussiano
-    frec_altas = cv2.subtract(im2, gaussian_blur(im2, sigma2))
+    frec_altas = cv2.subtract(im2, gaussian_blur(im2, sigma2, sigma2))
     # cv2.addWeighted calcula la suma ponderada de dos matrices (ponderaciones 0.5 para cada matriz)
     return [frec_bajas, frec_altas, cv2.addWeighted(frec_bajas, 0.5, frec_altas, 0.5, 0)]
 
@@ -472,10 +505,10 @@ def bonus_3(im_1, im_2, sigma_1, sigma_2, image_title):
 def main():
     im_cat_c = leer_imagen('data/cat.bmp', 1)   # Leemos la imagen en color
 
-    #ejercicio_1A(im_cat_c)
-    #ejercicio_1B(im_cat_c)
+    ejercicio_1A(im_cat_c)
+    ejercicio_1B(im_cat_c)
 
-    #ejercicio_2A(im_cat_c)
+    ejercicio_2A(im_cat_c)
     ejercicio_2B(im_cat_c)
     ejercicio_2C(im_cat_c)
 
@@ -493,8 +526,8 @@ def main():
     # Ejecución de la hibridación y mostrado de imágenes
     vim_1 = ejercicio_3B(im_bird_g, im_plane_g, 3, 5, "Avión - Pájaro")
     vim_2 = ejercicio_3B(im_dog_g, im_cat_g, 9, 9, "Gato - Perro")
-    vim_3 = ejercicio_3B(im_fish_g, im_submarine_g, 7, 7, "Pez - Submarino")
-    #vim_4 = ejercicio_3B(im_bicycle_g, im_motorcycle_g, 9, 5, "Bicicleta - Moto")
+    vim_3 = ejercicio_3B(im_bicycle_g, im_motorcycle_g, 9, 5, "Bicicleta - Moto")
+    #vim_4 = ejercicio_3B(im_fish_g, im_submarine_g, 7, 7, "Pez - Submarino")
     #vim_5 = ejercicio_3B(im_einstein_g, im_marilyn_g, 3, 3, "Einstein - Marilyn")
     input("Pulsa 'Enter' para continuar\n")
 
@@ -507,11 +540,11 @@ def main():
     input("Pulsa 'Enter' para continuar\n")
 
     #bonus_1()
-    #bonus_2()
-    #im_1a, im_1b = leer_imagen("data/guitarra.png", 1), leer_imagen("data/violin.png", 1)
-    #im_2a, im_2b = leer_imagen("data/trompeta.jpg", 1), leer_imagen("data/saxofon.jpg", 1)
-    #bonus_3(im_1a, im_1b, 9, 9, "Guitarra - Violín")
-    #bonus_3(im_2a, im_2b, 3, 7, "Trompeta - Saxofón")
+    bonus_2()
+    im_1a, im_1b = leer_imagen("data/guitarra.png", 1), leer_imagen("data/violin.png", 1)
+    im_2a, im_2b = leer_imagen("data/trompeta.jpg", 1), leer_imagen("data/saxofon.jpg", 1)
+    bonus_3(im_1a, im_1b, 9, 9, "Guitarra - Violín")
+    bonus_3(im_2a, im_2b, 3, 7, "Trompeta - Saxofón")
 
 if __name__ == "__main__":
 	main()
