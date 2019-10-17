@@ -34,51 +34,45 @@ def leer_imagen(file_name, flag_color = 1):
 
 """ Normaliza una matriz.
 - image: matriz a normalizar.
+- image_title (op): título de la imagen. Por defecto ' '.
 """
-def normaliza(image):
+def normaliza(image, image_title = " "):
     # En caso de que los máximos sean 255 o las mínimos 0 no iteramos en los  bucles
     if len(image.shape) == 2:
         max = np.amax(image)
         min = np.amin(image)
-        if max!=255 and min!=0:
-            print('Normalizando imagen')
+        if max>255 or min<0:
+            print("Normalizando imagen '" + image_title + "'")
             for i in range(image.shape[0]):
                 for j in range(image.shape[1]):
                     image[i][j] = (image[i][j]-min)/(max-min) * 255
     elif len(image.shape) == 3:
         max = np.amax(image, (0,1))
         min = np.amin(image, (0,1))
-        if max[0]!=255 and max[1]!=255 and max[2]!=255 and min[0]!=0 and min[1]!=0 and min[2]!=0:
-            print('Normalizando imagen')
+        if max[0]>255 or max[1]>255 or max[2]>255 or min[0]<0 or min[1]<0 or min[2]<0:
+            print("Normalizando imagen '" + image_title + "'")
             for i in range(image.shape[0]):
                 for j in range(image.shape[1]):
                     for k in range(image.shape[2]):
                         image[i][j][k] = (image[i][j][k]-min[k])/(max[k]-min[k]) * 255
 
+    return image
+
 """ Imprime una imagen a través de una matriz.
-- image_title: título de la imagen.
 - image: imagen a imprimir.
+- image_title(op): título de la imagen. Por defecto 'Imagen'
 """
-def pintaI(image_title, image):
-    max = np.amax(image)
-    min = np.amin(image)
-    print(image)
-    print(max)
-    print(min)
-
-    normaliza(image)        # normalizamos la matriz
-
-    max = np.amax(image)
-    min = np.amin(image)
-    print(image)
-    print(max)
-    print(min)
-
+def pintaI(image, image_title = "Imagen"):
+    #print(image)
+    #print(np.amax(image))
+    #print(np.amin(image))
+    image = normaliza(image, image_title)        # normalizamos la matriz
     image = image.astype(np.uint8)
     plt.figure(0).canvas.set_window_title("Ejercicio")  # Ponemos nombre a la ventana
     plt.imshow(image)
     plt.title(image_title)  # Ponemos nombre a la imagen
     plt.show()
+    image = image.astype(np.float64)
 
     #cv2.imshow(image_title, image)
     #cv2.waitKey(0)
@@ -113,7 +107,7 @@ def pintaMI(image_list, horizontal=1):
         aux = cv2.resize(image_list[i], (300,300), interpolation = cv2.INTER_AREA)
         concatenated_img = np.concatenate((concatenated_img, aux), axis=horizontal)
 
-    pintaI("Imágenes concatenadas", concatenated_img)
+    pintaI(concatenated_img, "Imágenes concatenadas")
 
 """ Muestra múltiples imágenes en una ventena Matplotlib.
 - image_list: La lista de imágenes.
@@ -126,19 +120,12 @@ def imprimir_imagenes_titulos(image_list, image_title_list, rows, columns, windo
     fig = plt.figure(0)
     fig.canvas.set_window_title(window_title)
 
-    """max = np.amax(image_list[0])
-    min = np.amin(image_list[0])
-    print(image_list[0])
-    print(max)
-    print(min)"""
+    #print(image_list[0])
+    #print(np.amax(image_list[0])
+    #print(np.amin(image_list[0])
     for i in range(len(image_list)):
-        normaliza(image_list[i])
+        normaliza(image_list[i], image_title_list[i])
         image_list[i] = image_list[i].astype(np.uint8)
-    """max = np.amax(image_list[0])
-    min = np.amin(image_list[0])
-    print(image_list[0])
-    print(max)
-    print(min)"""
 
     for i in range(rows * columns):
         if i < len(image_list):
@@ -148,6 +135,9 @@ def imprimir_imagenes_titulos(image_list, image_title_list, rows, columns, windo
             plt.xticks([])  # Se le pasa una lista de posiciones en las que se deben colocar los
             plt.yticks([])  # ticks, si pasamos una lista vacía deshabilitamos los xticks e yticks
     plt.show()
+
+    for i in range(len(image_list)):
+        image_list[i] = image_list[i].astype(np.float64)    # lo devolvemos a su formato.
 
 ######################
 ###   Práctica 1   ###
@@ -284,7 +274,7 @@ def imprimeMI(image_list, image_title = "Imágenes"):
       image_list[i] = cv2.copyMakeBorder(image_list[i], borde, borde + (altura - image_list[i].shape[0]) % 2, 0, 0, cv2.BORDER_CONSTANT, value = (0,0,0))
 
   im_concat = cv2.hconcat(image_list)
-  pintaI(image_title, im_concat)
+  pintaI(im_concat, image_title)
 
 """ Hace un subsampling de la imagen pasada como argumento. Devuelve la imagen recortada.
 - image: imagen a recortar.
@@ -331,7 +321,7 @@ def upsampling(image, n_fil, n_col):
 """
 def gaussian_pyramid(image, levels = 4, border_type = cv2.BORDER_CONSTANT):
     pyramid = [image]
-    blur = image
+    blur = np.copy(image)
     for n in range(levels):
         blur = gaussian_blur(blur, 1, 1, 3, 3, border_type = border_type)
         blur = subsampling(blur)
@@ -373,13 +363,115 @@ def ejercicio_2B(image):
     imprimeMI(lap_pyr, 'Pirámide laplaciana')
     input("Pulsa 'Enter' para continuar\n")
 
+""" Eleva al cuadrado cada píxel.
+- image: imagen a tratar
+"""
+def eleva_cuadrado(image):
+    if len(image.shape) == 2:
+        for i in range(image.shape[0]):
+            for j in range(image.shape[1]):
+                image[i][j] = image[i][j] * image[i][j]
+    elif len(image.shape) == 3:
+        for i in range(image.shape[0]):
+            for j in range(image.shape[1]):
+                for k in range(image.shape[2]):
+                    image[i][j][k] = image[i][j][k] * image[i][j][k]
+
+""" Supresión de de no máximos.
+- image: imagen a tratar
+"""
+def non_maximum_supression(image):
+    res = np.copy(image)
+    if len(image.shape) == 2:
+        for i in range(image.shape[0]):
+            for j in range(image.shape[1]):
+                max = 0
+                if i>=1 and j>=1:
+                    if max<image[i-1][j-1]:
+                        max = image[i-1][j-1]
+                if i>=1:
+                    if max<image[i-1][j]:
+                        max = image[i-1][j]
+                if i>=1 and j<(image.shape[1]-1):
+                    if max<image[i-1][j+1]:
+                        max = image[i-1][j+1]
+                if j>=1:
+                    if max<image[i][j-1]:
+                        max = max<image[i][j-1]
+                if j<(image.shape[1]-1):
+                    if max<image[i][j+1]:
+                        max = max<image[i][j+1]
+                if i<(image.shape[0]-1) and j>=1:
+                    if max<image[i+1][j-1]:
+                        max = max<image[i+1][j-1]
+                if i<(image.shape[0]-1):
+                    if max<image[i+1][j]:
+                        max = max<image[i+1][j]
+                if i<(image.shape[0]-1) and j<(image.shape[1]-1):
+                    if max<image[i+1][j+1]:
+                        max = max<image[i+1][j+1]
+
+                if max<image[i][j]:
+                    res[i][j] = image[i][j]
+                else:
+                    res[i][j] = 0
+
+    elif len(image.shape) == 3:
+        for i in range(image.shape[0]):
+            for j in range(image.shape[1]):
+                for k in range(image.shape[2]):
+                    max = 0
+                    if i>=1 and j>=1:
+                        if max<image[i-1][j-1][k]:
+                            max = image[i-1][j-1][k]
+                    if i>=1:
+                        if max<image[i-1][j][k]:
+                            max = image[i-1][j][k]
+                    if i>=1 and j<(image.shape[1]-1):
+                        if max<image[i-1][j+1][k]:
+                            max = image[i-1][j+1][k]
+                    if j>=1:
+                        if max<image[i][j-1][k]:
+                            max = max<image[i][j-1][k]
+                    if j<(image.shape[1]-1):
+                        if max<image[i][j+1][k]:
+                            max = max<image[i][j+1][k]
+                    if i<(image.shape[0]-1) and j>=1:
+                        if max<image[i+1][j-1][k]:
+                            max = max<image[i+1][j-1][k]
+                    if i<(image.shape[0]-1):
+                        if max<image[i+1][j][k]:
+                            max = max<image[i+1][j][k]
+                    if i<(image.shape[0]-1) and j<(image.shape[1]-1):
+                        if max<image[i+1][j+1][k]:
+                            max = max<image[i+1][j+1][k]
+
+                    if max<image[i][j][k]:
+                        res[i][j][k] = image[i][j][k]
+                    else:
+                        res[i][j] = 0
+
+    return res
+
 """ Ejecución de ejemplos del ejercicio 2C.
 - image: imagen a tratar
 """
 def ejercicio_2C(image):
     print("--- EJERCICIO 2C - ESPACIO DE ESCALAS LAPLACIANO ---")
+    im = np.copy(image)
     sigma = 1
     N = 4
+    k = 1.2
+
+    for i in range(1, N):
+        im = sigma * sigma * laplacian_gaussian(im, 7)
+        im = non_maximum_supression(im)
+        sigma = k * sigma
+
+    #cv2.circle()
+    im = normaliza(im)
+    pintaI(im)
+    print(im)
 
     input("Pulsa 'Enter' para continuar\n")
 
@@ -553,11 +645,11 @@ def bonus_3(im_1, im_2, sigma_1, sigma_2, image_title):
 def main():
     im_cat_c = leer_imagen('data/cat.bmp', 1)   # Leemos la imagen en color
 
-    ejercicio_1A(im_cat_c)
-    ejercicio_1B(im_cat_c)
+    #ejercicio_1A(im_cat_c)
+    #ejercicio_1B(im_cat_c)
 
-    ejercicio_2A(im_cat_c)
-    ejercicio_2B(im_cat_c)
+    #ejercicio_2A(im_cat_c)
+    #ejercicio_2B(im_cat_c)
     ejercicio_2C(im_cat_c)
 
     print("--- EJERCICIO 3A - FUNCIÓN 'hybridize_images' IMPLEMENTADA ---")
