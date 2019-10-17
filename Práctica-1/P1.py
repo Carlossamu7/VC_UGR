@@ -29,7 +29,7 @@ def leer_imagen(file_name, flag_color = 1):
 
     img = cv2.imread(file_name, flag_color)
     imgrgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    imgrgb.astype(np.float64)
+    imgrgb = imgrgb.astype(np.float64)
     return imgrgb
 
 """ Normaliza una matriz.
@@ -74,7 +74,7 @@ def pintaI(image_title, image):
     print(max)
     print(min)
 
-    image.astype(np.uint8)
+    image = image.astype(np.uint8)
     plt.figure(0).canvas.set_window_title("Ejercicio")  # Ponemos nombre a la ventana
     plt.imshow(image)
     plt.title(image_title)  # Ponemos nombre a la imagen
@@ -126,19 +126,19 @@ def imprimir_imagenes_titulos(image_list, image_title_list, rows, columns, windo
     fig = plt.figure(0)
     fig.canvas.set_window_title(window_title)
 
-    max = np.amax(image_list[0])
+    """max = np.amax(image_list[0])
     min = np.amin(image_list[0])
     print(image_list[0])
     print(max)
-    print(min)
+    print(min)"""
     for i in range(len(image_list)):
         normaliza(image_list[i])
-        image_list[i].astype(np.uint8)
-    max = np.amax(image_list[0])
+        image_list[i] = image_list[i].astype(np.uint8)
+    """max = np.amax(image_list[0])
     min = np.amin(image_list[0])
     print(image_list[0])
     print(max)
-    print(min)
+    print(min)"""
 
     for i in range(rows * columns):
         if i < len(image_list):
@@ -153,7 +153,7 @@ def imprimir_imagenes_titulos(image_list, image_title_list, rows, columns, windo
 ###   Práctica 1   ###
 ######################
 
-# EJERCICIO 1 #
+# FUNCIONES ANTIGUAS #
 
 """ Aplica una máscara Gaussiana 2D. Devuelve la imagen con las máscara aplicada.
 - image: la imagen.
@@ -168,37 +168,6 @@ dst = cv.GaussianBlur(src, ksize, sigmaX[, dst[, sigmaY[, borderType=BORDER_DEFA
 def gaussian_blur_original(image, sigma_x, sigma_y = 0, ksize = (0,0), border_type = cv2.BORDER_DEFAULT):
     return cv2.GaussianBlur(image, ksize, sigma_x, sigmaY = sigma_y, borderType = border_type)
 
-def convolution(image, kernel_x, kernel_y, border_type = cv2.BORDER_DEFAULT):
-    kernel_x = np.transpose(kernel_x)
-    kernel_x = cv2.flip(kernel_x, 0)
-    kernel_y = cv2.flip(kernel_y, 1)
-    image = cv2.filter2D(image, -1, kernel_x, borderType = border_type)
-    image = cv2.filter2D(image, -1, kernel_y, borderType = border_type)
-    return image
-
-def gaussian_blur(image, sigma_x, sigma_y, k_size_x = 0, k_size_y = 0, border_type = cv2.BORDER_DEFAULT):
-    if k_size_x == 0:
-        k_size_x = int(6*sigma_x + 1)
-    if k_size_y == 0:
-        k_size_y = int(6*sigma_y + 1)
-
-    kernel_x = cv2.getGaussianKernel(k_size_x, sigma_x)
-    kernel_y = cv2.getGaussianKernel(k_size_y, sigma_y)
-    return convolution(image, kernel_x, kernel_y, border_type)
-
-""" Obtiene máscaras 1D de máscaras derivadas. Devuelve los vectores de derivada
-Argumentos posicionales:
-- dx: orden de derivación respecto de x.
-- dy: orden de derivación respecto de y.
-- k_size: tamaño del kernel, puede ser 1, 3, 5, 7.
-- border_type (op): tipo de bordes. BORDER_DEFAULT.
-"""
-def derive_convolution(image, dx, dy, k_size, border_type = cv2.BORDER_DEFAULT):
-    print('Máscara de derivada con orden ({}, {}) y tamaño del kernel {}'.format(dx, dy, k_size))
-    kx, ky = cv2.getDerivKernels(dx,dy,k_size)
-    image = convolution(image, kx, ky, border_type)
-    return image
-
 """ Aplica máscara laplaciana a imagen. Devuelve la imagen con la máscara aplicada.
 - im: Imagen a la que aplicar la máscara.
 - k_size (op): Tamaño del kernel para Laplacian. Por defecto es 7.
@@ -210,33 +179,88 @@ def laplacian_gaussian_original(image, sigma = 0, k_size = 7, border_type = cv2.
     blur = gaussian_blur(image, sigma, ksize = size, border_type = border_type)
     return cv2.Laplacian(blur, -1, ksize = k_size, borderType = border_type, delta = 50)
 
-def laplacian_gaussian(image, sigma = 0, k_size = 5, size = (0, 0), border_type = cv2.BORDER_DEFAULT):
+# EJERCICIO 1
+
+""" Aplica una máscara Gaussiana 2D. Devuelve la imagen con las máscara aplicada.
+- image: la imagen a tratar.
+- kernel_x: kernel en las dirección X.
+- kernel_y: kernel en las dirección Y.
+- border_type (op): tipo de bordes. BORDER_DEFAULT.
+"""
+def convolution(image, kernel_x, kernel_y, border_type = cv2.BORDER_DEFAULT):
+    kernel_x = np.transpose(kernel_x)
+    kernel_x = cv2.flip(kernel_x, 0)
+    kernel_y = cv2.flip(kernel_y, 1)
+    im_conv = cv2.filter2D(image, -1, kernel_x, borderType = border_type)
+    im_conv = cv2.filter2D(im_conv, -1, kernel_y, borderType = border_type)
+    return im_conv
+
+""" Aplica una máscara Gaussiana 2D. Devuelve la imagen con las máscara aplicada.
+- image: la imagen a tratar.
+- sigma_x: sigma en la dirección X.
+- sigma_y: sigma en la dirección Y.
+- k_size_x (op): tamaño del kernel en dirección X (positivo e impar). Por defecto es 0, se obtiene a través de sigma.
+- k_size_y (op): tamaño del kernel en dirección Y (positivo e impar). Por defecto es 0, se obtiene a través de sigma.
+- border_type (op): tipo de bordes. BORDER_DEFAULT.
+"""
+def gaussian_blur(image, sigma_x, sigma_y, k_size_x = 0, k_size_y = 0, border_type = cv2.BORDER_DEFAULT):
+    if k_size_x == 0:
+        k_size_x = int(6*sigma_x + 1)
+    if k_size_y == 0:
+        k_size_y = int(6*sigma_y + 1)
+
+    kernel_x = cv2.getGaussianKernel(k_size_x, sigma_x)
+    kernel_y = cv2.getGaussianKernel(k_size_y, sigma_y)
+    return convolution(image, kernel_x, kernel_y, border_type)
+
+""" Obtiene máscaras 1D de máscaras derivadas. Devuelve los vectores de derivada
+- image: la imagen a tratar.
+- dx: orden de derivación respecto de x.
+- dy: orden de derivación respecto de y.
+- k_size: tamaño del kernel, puede ser 1, 3, 5, 7.
+- border_type (op): tipo de bordes. BORDER_DEFAULT.
+"""
+def derive_convolution(image, dx, dy, k_size, border_type = cv2.BORDER_DEFAULT):
+    print('Máscara de derivada con orden ({}, {}) y tamaño del kernel {}'.format(dx, dy, k_size))
+    kx, ky = cv2.getDerivKernels(dx,dy,k_size)
+    im_conv = convolution(image, kx, ky, border_type)
+    return im_conv
+
+""" Aplica máscara laplaciana a imagen. Devuelve la imagen con la máscara aplicada.
+- im: Imagen a la que aplicar la máscara.
+- k_size: Tamaño del kernel para Laplacian.
+- border_type (op): Tipo de borde. Por defecto BORDER_DEFAULT.
+"""
+def laplacian_gaussian(image, k_size, border_type = cv2.BORDER_DEFAULT):
     k_x1, k_y1 = cv2.getDerivKernels(2, 0, k_size)
     k_x2, k_y2 = cv2.getDerivKernels(0, 2, k_size)
     im_convolution_x = convolution(image, k_x1, k_y1, border_type)
     im_convolution_y = convolution(image, k_x2, k_y2, border_type)
-    return cv2.addWeighted(im_convolution_x, 1, im_convolution_y, 1, 0)
+    #return cv2.addWeighted(im_convolution_x, 1, im_convolution_y, 1, 0)
+    return im_convolution_x + im_convolution_y
 
-""" Ejecución de ejemplos del ejercicio 1A con diferentes σ y condiciones de contorno. """
+""" Ejecución de ejemplos del ejercicio 1A con diferentes σ y condiciones de contorno.
+- image: imagen a tratar.
+"""
 def ejercicio_1A(image):
     print("--- EJERCICIO 1A - GAUSSIANA 2D Y MÁSCARAS 1D (getDerivKernels) ---")
-    imprimir_imagenes_titulos([image, gaussian_blur(image, 2, 2, 5, 5), gaussian_blur(image, 6, 6, 7, 7)],
-                              ['Original', 'σ_x = 2', 'σ_x = 6'], 1, 3, 'Gaussian')
-    imprimir_imagenes_titulos([image, gaussian_blur(image, 2, 3, 5, 5), gaussian_blur(image, 6, 4, 5, 5)],
-                              ['Original', 'σ_x = 2, σ_y = 3', 'σ_x = 6, σ_y = 4'], 1, 3, 'Gaussian')
+    imprimir_imagenes_titulos([image, gaussian_blur(image, 2, 2, 5, 5), gaussian_blur(image, 4, 4, 7, 7), gaussian_blur(image, 1, 2)],
+                              ['Original', 'σ_x = 2, σ_y = 2, ksize=(5,5)', 'σ_x = 4, σ_y = 4, ksize=(7,7)', 'σ_x = 1, σ_y = 2, ksize~σ'], 2, 2, 'Gaussian with different σ')
     imprimir_imagenes_titulos([gaussian_blur(image, 1, 1, 5, 5, border_type=cv2.BORDER_DEFAULT), gaussian_blur(image, 1, 1, 5, 5, border_type=cv2.BORDER_REPLICATE),
                                gaussian_blur(image, 1, 1, 5, 5, border_type=cv2.BORDER_REFLECT), gaussian_blur(image, 1, 1, 5, 5, border_type=cv2.BORDER_CONSTANT)],
-                              ['BORDER_DEFAULT', 'BORDER_REPLICATE', 'BORDER_REFLECT', 'BORDER_CONSTANT'], 2, 2, 'Gaussian with borders')
+                              ['BORDER_DEFAULT', 'BORDER_REPLICATE', 'BORDER_REFLECT', 'BORDER_CONSTANT'], 2, 2, 'Gaussian with different borders')
 
     # Máscaras de derivadas 1D
-    tams = [3, 5]
-    for tam in tams:
+    tam_list = [3, 5]
+    for tam in tam_list:
         imprimir_imagenes_titulos([derive_convolution(image, 1, 0, tam), derive_convolution(image, 0, 1, tam), derive_convolution(image, 1, 1, tam), derive_convolution(image, 2, 0, tam),
                                    derive_convolution(image, 0, 2, tam), derive_convolution(image, 2, 1, tam), derive_convolution(image, 1, 2, tam), derive_convolution(image, 2, 2, tam)],
-                                  ['(1, 0)', '(0, 1)', '(1, 1)', '(2, 0)', '(0, 2)', '(2, 1)', '(1, 2)', '(2, 2)'], 3, 3, 'Máscaras de derivadas 1D')
+                                  ['(1, 0)', '(0, 1)', '(1, 1)', '(2, 0)', '(0, 2)', '(2, 1)', '(1, 2)', '(2, 2)'], 3, 3, 'Máscaras de derivadas 1D con tamaño {}'.format(tam))
     input("Pulsa 'Enter' para continuar\n")
 
-""" Ejecución de ejemplos del ejercicio 1B con σ=1 y σ=3 y dos tipos de bordes """
+""" Ejecución de ejemplos del ejercicio 1B con σ=1 y σ=3 y dos tipos de bordes.
+- image: imagen a tratar.
+"""
 def ejercicio_1B(image):
     print("--- EJERCICIO 1B -  LAPLACIANA DE GAUSSIANA ---")
     imprimir_imagenes_titulos([image, laplacian_gaussian(image, 1, border_type = cv2.BORDER_REPLICATE), laplacian_gaussian(image, 1, border_type = cv2.BORDER_CONSTANT)],
@@ -249,16 +273,15 @@ def ejercicio_1B(image):
 
 """ Visualiza varias imágenes a la vez.
 - image_list: Secuencia de imágenes.
+- image_title: título de la imagen.
 """
-def muestraMI(image_list, image_title = "Imágenes"):
+def imprimeMI(image_list, image_title = "Imágenes"):
   altura = max(im.shape[0] for im in image_list)
 
   for i,im in enumerate(image_list):
     if im.shape[0] < altura: # Redimensionar imágenes
       borde = int((altura - image_list[i].shape[0])/2)
-      image_list[i] = cv2.copyMakeBorder(
-        image_list[i], borde, borde + (altura - image_list[i].shape[0]) % 2,
-        0, 0, cv2.BORDER_CONSTANT, value = (0,0,0))
+      image_list[i] = cv2.copyMakeBorder(image_list[i], borde, borde + (altura - image_list[i].shape[0]) % 2, 0, 0, cv2.BORDER_CONSTANT, value = (0,0,0))
 
   im_concat = cv2.hconcat(image_list)
   pintaI(image_title, im_concat)
@@ -280,6 +303,8 @@ def subsampling(image):
 
 """ Hace un upsampling de la imagen pasada como argumento. Devuelve la imagen agrandada.
 - image: imagen a agrandar.
+- n_fil: número de filas de la matriz resultante.
+- n_col: número de columnas de la matriz resultante.
 """
 def upsampling(image, n_fil, n_col):
     depth = image.shape[2]
@@ -306,10 +331,11 @@ def upsampling(image, n_fil, n_col):
 """
 def gaussian_pyramid(image, levels = 4, border_type = cv2.BORDER_CONSTANT):
     pyramid = [image]
+    blur = image
     for n in range(levels):
-        image = gaussian_blur(image, 1, 1, 3, 3, border_type = border_type)
-        image = subsampling(image)
-        pyramid.append(image)
+        blur = gaussian_blur(blur, 1, 1, 3, 3, border_type = border_type)
+        blur = subsampling(blur)
+        pyramid.append(blur)
     return pyramid
 
 """ Genera representación de pirámide laplaciana. Devuelve la lista de imágenes que forman la pirámide laplaciana.
@@ -329,21 +355,27 @@ def laplacian_pyramid(image, levels = 4, border_type = cv2.BORDER_DEFAULT):
         lap_pyr.append(cv2.subtract(gau_pyr[n], gau_n_1)+32) # Resta al nivel n el nivel n+1 y sumo una constante para visualizarlo
     return lap_pyr
 
-""" Ejecución de ejemplos del ejercicio 2A. """
+""" Ejecución de ejemplos del ejercicio 2A.
+- image: imagen a tratar
+"""
 def ejercicio_2A(image):
     print("--- EJERCICIO 2A - GAUSSIAN PYRAMID ---")
     gau_pyr = gaussian_pyramid(image, 4, cv2.BORDER_CONSTANT)
-    muestraMI(gau_pyr, 'Pirámide gaussiana')
+    imprimeMI(gau_pyr, 'Pirámide gaussiana')
     input("Pulsa 'Enter' para continuar\n")
 
-""" Ejecución de ejemplos del ejercicio 2B. """
+""" Ejecución de ejemplos del ejercicio 2B.
+- image: imagen a tratar
+"""
 def ejercicio_2B(image):
     print("--- EJERCICIO 2B - LAPLACIAN PYRAMID ---")
     lap_pyr = laplacian_pyramid(image, 4, cv2.BORDER_CONSTANT)
-    muestraMI(lap_pyr, 'Pirámide laplaciana')
+    imprimeMI(lap_pyr, 'Pirámide laplaciana')
     input("Pulsa 'Enter' para continuar\n")
 
-""" Ejecución de ejemplos del ejercicio 2C. """
+""" Ejecución de ejemplos del ejercicio 2C.
+- image: imagen a tratar
+"""
 def ejercicio_2C(image):
     print("--- EJERCICIO 2C - ESPACIO DE ESCALAS LAPLACIANO ---")
     sigma = 1
@@ -368,18 +400,28 @@ def hybridize_images(im1, im2, sigma1, sigma2):
     # cv2.addWeighted calcula la suma ponderada de dos matrices (ponderaciones 0.5 para cada matriz)
     return [frec_bajas, frec_altas, cv2.addWeighted(frec_bajas, 0.5, frec_altas, 0.5, 0)]
 
-""" Ejecución de ejemplos del ejercicio 3B. """
-def ejercicio_3B(im_1, im_2, sigma1, sigma2, title = "Hibridación de imágenes"):
-    vim = hybridize_images(im_1, im_2, sigma1, sigma2)  # Hibridamos las imágenes
-    muestraMI(vim, title)                               # Mostramos las hibridaciones
+""" Ejecución de ejemplos del ejercicio 3B.
+- im1: Imagen para frecuencias bajas.
+- im2: Imagen para frecuencias altas.
+- sigma1: Parámetro sigma para la imagen de frecuencias bajas.
+- sigma2: Parámetro sigma para la imagen de frecuencias altas.
+- image_title: título de la imagen
+"""
+def ejercicio_3B(im1, im2, sigma1, sigma2, title = "Hibridación de imágenes"):
+    vim = hybridize_images(im1, im2, sigma1, sigma2)    # Hibridamos las imágenes
+    imprimeMI(vim, title)                               # Mostramos las hibridaciones
     return vim
 
-""" Ejecución de ejemplos del ejercicio 3C. """
+""" Ejecución de ejemplos del ejercicio 3C.
+- vim: vector de imágenes resultante de la hibridación
+- title (op): título de la imagen. Por defecto "Pirámide gaussiana de la hibridada".
+- levels (op): niveles de la pirámide. Por defecto 4.
+- border_type (op): tipo de borde. Por defecto BORDER_CONSTANT.
+"""
 def ejercicio_3C(vim, title = "Pirámide gaussiana de la hibridada", levels = 4, border_type = cv2.BORDER_CONSTANT):
     gau_pyr = gaussian_pyramid(vim[2], 4, border_type)  # Construimos las pirámides gaussianas
-    muestraMI(gau_pyr, title)                           # Imprimimos las pirámides gaussianas
+    imprimeMI(gau_pyr, title)                           # Imprimimos las pirámides gaussianas
     return gau_pyr
-
 
 #################
 ###   BONUS   ###
@@ -472,17 +514,23 @@ def bonus_2():
     vim_e = hybridize_images(im_e1, im_e2, 3, 3)
 
     # Mostramos las hibridaciones
-    muestraMI(vim_a, "Avión - Pájaro")
-    muestraMI(vim_b, "Gato - Perro")
-    muestraMI(vim_c, "Bicicleta - Moto")
-    muestraMI(vim_d, "Pez - Submarino")
-    muestraMI(vim_e, "Einstein - Marilyn")
+    imprimeMI(vim_a, "Avión - Pájaro")
+    imprimeMI(vim_b, "Gato - Perro")
+    imprimeMI(vim_c, "Bicicleta - Moto")
+    imprimeMI(vim_d, "Pez - Submarino")
+    imprimeMI(vim_e, "Einstein - Marilyn")
 
     input("Pulsa 'Enter' para continuar\n")
 
 # Bonus 3 #
 
-""" Ejecución del bonus 3. """
+""" Ejecución del bonus 3.
+- im1: Imagen para frecuencias bajas.
+- im2: Imagen para frecuencias altas.
+- sigma1: Parámetro sigma para la imagen de frecuencias bajas.
+- sigma2: Parámetro sigma para la imagen de frecuencias altas.
+- image_title: título de la imagen
+"""
 def bonus_3(im_1, im_2, sigma_1, sigma_2, image_title):
     print("--- BONUS 3 - IMAGEN HÍBRIDA CON ELECCIÓN DE PAREJA '" + image_title + "' ---")
     # Las dos imágenes han de tener el mismo tamaño por lo que  calculo mínimos de ancho y alto
@@ -493,7 +541,7 @@ def bonus_3(im_1, im_2, sigma_1, sigma_2, image_title):
     im_2 = cv2.resize(im_2, (min_anc, min_alt), im_2, interpolation = cv2.INTER_CUBIC)
     # Hibrido y muestro las imágenes
     vim = hybridize_images(im_1, im_2, sigma_1, sigma_2)
-    muestraMI(vim, image_title)
+    imprimeMI(vim, image_title)
 
     input("Pulsa 'Enter' para continuar\n")
 
