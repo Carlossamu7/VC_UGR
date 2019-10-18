@@ -47,8 +47,9 @@ def normaliza(image, image_title = " "):
                 for j in range(image.shape[1]):
                     image[i][j] = (image[i][j]-min)/(max-min) * 255
     elif len(image.shape) == 3:
-        max = np.amax(image, (0,1))
-        min = np.amin(image, (0,1))
+        max = [np.amax(image[:,:,0]), np.amax(image[:,:,1]), np.amax(image[:,:,2])]
+        min = [np.amin(image[:,:,0]), np.amin(image[:,:,1]), np.amin(image[:,:,2])]
+
         if max[0]>255 or max[1]>255 or max[2]>255 or min[0]<0 or min[1]<0 or min[2]<0:
             print("Normalizando imagen '" + image_title + "'")
             for i in range(image.shape[0]):
@@ -222,11 +223,10 @@ def derive_convolution(image, dx, dy, k_size, border_type = cv2.BORDER_DEFAULT):
 - border_type (op): Tipo de borde. Por defecto BORDER_DEFAULT.
 """
 def laplacian_gaussian(image, k_size, border_type = cv2.BORDER_DEFAULT):
-    k_x1, k_y1 = cv2.getDerivKernels(2, 0, k_size)
-    k_x2, k_y2 = cv2.getDerivKernels(0, 2, k_size)
+    k_x1, k_y1 = cv2.getDerivKernels(2, 0, k_size, normalize = True)
+    k_x2, k_y2 = cv2.getDerivKernels(0, 2, k_size, normalize = True)
     im_convolution_x = convolution(image, k_x1, k_y1, border_type)
     im_convolution_y = convolution(image, k_x2, k_y2, border_type)
-    #return cv2.addWeighted(im_convolution_x, 1, im_convolution_y, 1, 0)
     return im_convolution_x + im_convolution_y
 
 """ Ejecución de ejemplos del ejercicio 1A con diferentes σ y condiciones de contorno.
@@ -243,9 +243,20 @@ def ejercicio_1A(image):
     # Máscaras de derivadas 1D
     tam_list = [3, 5]
     for tam in tam_list:
-        imprimir_imagenes_titulos([derive_convolution(image, 1, 0, tam), derive_convolution(image, 0, 1, tam), derive_convolution(image, 1, 1, tam), derive_convolution(image, 2, 0, tam),
-                                   derive_convolution(image, 0, 2, tam), derive_convolution(image, 2, 1, tam), derive_convolution(image, 1, 2, tam), derive_convolution(image, 2, 2, tam)],
-                                  ['(1, 0)', '(0, 1)', '(1, 1)', '(2, 0)', '(0, 2)', '(2, 1)', '(1, 2)', '(2, 2)'], 3, 3, 'Máscaras de derivadas 1D con tamaño {}'.format(tam))
+        #imprimir_imagenes_titulos([derive_convolution(image, 1, 0, tam), derive_convolution(image, 0, 1, tam), derive_convolution(image, 1, 1, tam), derive_convolution(image, 2, 0, tam),
+        #                           derive_convolution(image, 0, 2, tam), derive_convolution(image, 2, 1, tam), derive_convolution(image, 1, 2, tam), derive_convolution(image, 2, 2, tam)],
+        #                          ['(1, 0)', '(0, 1)', '(1, 1)', '(2, 0)', '(0, 2)', '(2, 1)', '(1, 2)', '(2, 2)'], 3, 3, 'Máscaras de derivadas 1D con tamaño {}'.format(tam))
+        #imprimir_imagenes_titulos([derive_convolution(image, 0, 2, tam), derive_convolution(image, 2, 1, tam), derive_convolution(image, 1, 2, tam), derive_convolution(image, 2, 2, tam)],
+        #                          [(0, 2)', '(2, 1)', '(1, 2)', '(2, 2)'], 2, 2, 'Máscaras de derivadas 1D con tamaño {}'.format(tam))
+        pintaI(derive_convolution(image, 1, 0, tam), '(1,0)')
+        pintaI(derive_convolution(image, 0, 1, tam), '(0,1)')
+        pintaI(derive_convolution(image, 1, 1, tam), '(1,1)')
+        pintaI(derive_convolution(image, 2, 0, tam), '(2,0)')
+        pintaI(derive_convolution(image, 0, 2, tam), '(0,2)')
+        pintaI(derive_convolution(image, 2, 1, tam), '(2,1)')
+        pintaI(derive_convolution(image, 1, 2, tam), '(1,2)')
+        pintaI(derive_convolution(image, 2, 2, tam), '(2,2)')
+
     input("Pulsa 'Enter' para continuar\n")
 
 """ Ejecución de ejemplos del ejercicio 1B con σ=1 y σ=3 y dos tipos de bordes.
@@ -253,9 +264,10 @@ def ejercicio_1A(image):
 """
 def ejercicio_1B(image):
     print("--- EJERCICIO 1B -  LAPLACIANA DE GAUSSIANA ---")
-    imprimir_imagenes_titulos([image, laplacian_gaussian(image, 1, border_type = cv2.BORDER_REPLICATE), laplacian_gaussian(image, 1, border_type = cv2.BORDER_CONSTANT)],
+    # PARA NORMALIZAR MULTIPLICO POR SIGMA^2
+    imprimir_imagenes_titulos([image, laplacian_gaussian(image, 7, border_type = cv2.BORDER_REPLICATE), laplacian_gaussian(image, 7, border_type = cv2.BORDER_REFLECT)],
                        ['Original', 'σ = 1, REPLICATE', 'σ = 1, REFLECT'], 1, 3, 'Laplacian of gaussian')
-    imprimir_imagenes_titulos([image, laplacian_gaussian(image, 3, border_type = cv2.BORDER_REPLICATE), laplacian_gaussian(image, 3, border_type = cv2.BORDER_REFLECT)],
+    imprimir_imagenes_titulos([image, 9*laplacian_gaussian(image, 19, border_type = cv2.BORDER_REPLICATE), 9*laplacian_gaussian(image, 19, border_type = cv2.BORDER_REFLECT)],
                        ['Original', 'σ = 3, REPLICATE', 'σ = 3, REFLECT'], 1, 3, 'Laplacian of gaussian')
     input("Pulsa 'Enter' para continuar\n")
 
@@ -266,6 +278,7 @@ def ejercicio_1B(image):
 - image_title: título de la imagen.
 """
 def imprimeMI(image_list, image_title = "Imágenes"):
+    ####REtOCAR
   altura = max(im.shape[0] for im in image_list)
 
   for i,im in enumerate(image_list):
@@ -314,6 +327,53 @@ def upsampling(image, n_fil, n_col):
 
     return cp
 
+def upsampling2(image, n_fil, n_col):
+    depth = image.shape[2]
+    salida = np.zeros((n_fil, n_col, depth))
+
+    for k in range(0, depth):
+        salida[:,:,k][::2,::2] = image[:,:,k]
+        salida[:,:,k][1::2,::2] = image[:,:,k]
+        salida[:,:,k][::2,1::2] = image[:,:,k]
+        salida[:,:,k][1::2,1::2] = image[:,:,k]
+
+    return salida
+
+def upsampling3(image, n_fil, n_col):
+    depth = image.shape[2]
+    salida = np.zeros((n_fil, n_col, depth))
+    fil = False
+    col = True
+    print(n_fil), print(n_col)
+    if n_fil % 2 == 1:
+        n_fil = n_fil-1
+        FIL = True
+
+    if n_col % 2 == 1:
+        n_col = n_col-1
+        COL = True
+    print(n_fil), print(n_col)
+    for k in range(0, depth):
+        for i in range(0, n_fil, 2):
+            for j in range(0, n_col, 2):
+                print(i), print(j), print(k)
+                salida[i][j][k] = image[int(i/2), int(j/2), k]
+                salida[i+1][j][k] = image[int(i/2), int(j/2), k]
+                salida[i][j+1][k] = image[int(i/2), int(j/2), k]
+                salida[i+1][j+1][k] = image[int(i/2), int(j/2), k]
+
+        print("Fin {}".format(k))
+
+        if fil:
+            for k in range(0, depth):
+                salida[n_fil,:,k] = image[image.shape[0]-1,:,k]
+
+        if col:
+            for k in range(0, depth):
+                salida[:,n_col,k] = image[:,image.shape[1]-1,k]
+
+    return salida
+
 """ Genera representación de pirámide gaussiana. Devuelve la lista de imágenes que forman la pirámide gaussiana.
 - image: La imagen a la que generar la pirámide gaussiana.
 - levels (op): Número de niveles de la pirámide gaussiana. Por defecto 4.
@@ -323,7 +383,7 @@ def gaussian_pyramid(image, levels = 4, border_type = cv2.BORDER_CONSTANT):
     pyramid = [image]
     blur = np.copy(image)
     for n in range(levels):
-        blur = gaussian_blur(blur, 1, 1, 3, 3, border_type = border_type)
+        blur = gaussian_blur(blur, 2, 2, 7, 7, border_type = border_type)
         blur = subsampling(blur)
         pyramid.append(blur)
     return pyramid
@@ -337,12 +397,10 @@ def laplacian_pyramid(image, levels = 4, border_type = cv2.BORDER_DEFAULT):
     gau_pyr = gaussian_pyramid(image, levels+1, border_type)
     lap_pyr = []
     for n in range(levels):
-        #gau_n_1 = cv2.resize(gau_pyr[n+1], (gau_pyr[n].shape[1], gau_pyr[n].shape[0]), interpolation = cv2.INTER_CUBIC)
-        gau_n_1 = upsampling(gau_pyr[n+1], gau_pyr[n].shape[0], gau_pyr[n].shape[1])
-        gau_n_1 = gau_n_1.astype(np.uint8)
-        gau_pyr[n] = gau_pyr[n].astype(np.uint8)
-        gau_n_1 = 4*gaussian_blur(gau_n_1, 5, 5)
-        lap_pyr.append(cv2.subtract(gau_pyr[n], gau_n_1)+32) # Resta al nivel n el nivel n+1 y sumo una constante para visualizarlo
+        gau_n_1 = upsampling3(gau_pyr[n+1], gau_pyr[n].shape[0], gau_pyr[n].shape[1])
+        #gau_n_1 = 4*gaussian_blur(gau_n_1, 5, 5)
+        gau_n_1 = gaussian_blur(gau_n_1, 5, 5)
+        lap_pyr.append(normaliza(gau_pyr[n] - gau_n_1))
     return lap_pyr
 
 """ Ejecución de ejemplos del ejercicio 2A.
@@ -462,14 +520,16 @@ def ejercicio_2C(image):
     sigma = 1
     N = 4
     k = 1.2
+    UMBRAL = 140
 
-    for i in range(1, N):
+    for i in range(0, N):
         im = sigma * sigma * laplacian_gaussian(im, 7)
+        im = eleva_cuadrado(im)
         im = non_maximum_supression(im)
         sigma = k * sigma
 
-    #cv2.circle()
     im = normaliza(im)
+    cv2.circle()
     pintaI(im)
     print(im)
 
@@ -648,8 +708,8 @@ def main():
     #ejercicio_1A(im_cat_c)
     #ejercicio_1B(im_cat_c)
 
-    #ejercicio_2A(im_cat_c)
-    #ejercicio_2B(im_cat_c)
+    ejercicio_2A(im_cat_c)
+    ejercicio_2B(im_cat_c)
     ejercicio_2C(im_cat_c)
 
     print("--- EJERCICIO 3A - FUNCIÓN 'hybridize_images' IMPLEMENTADA ---")
