@@ -342,35 +342,48 @@ def upsampling2(image, n_fil, n_col):
 def upsampling3(image, n_fil, n_col):
     depth = image.shape[2]
     salida = np.zeros((n_fil, n_col, depth))
+
     fil = False
-    col = True
-    print(n_fil), print(n_col)
+    col = False
+
     if n_fil % 2 == 1:
         n_fil = n_fil-1
-        FIL = True
+        fil = True
 
     if n_col % 2 == 1:
         n_col = n_col-1
-        COL = True
-    print(n_fil), print(n_col)
+        col = True
+
     for k in range(0, depth):
+        # Relleno la matriz, en cada iteración escribo 4 elementos de la matriz de salida
         for i in range(0, n_fil, 2):
             for j in range(0, n_col, 2):
-                print(i), print(j), print(k)
                 salida[i][j][k] = image[int(i/2), int(j/2), k]
                 salida[i+1][j][k] = image[int(i/2), int(j/2), k]
                 salida[i][j+1][k] = image[int(i/2), int(j/2), k]
                 salida[i+1][j+1][k] = image[int(i/2), int(j/2), k]
 
-        print("Fin {}".format(k))
-
+        # Si el número de filas era impar escribo la última fila la cual borré con n_fil = n_fil-1
         if fil:
             for k in range(0, depth):
-                salida[n_fil,:,k] = image[image.shape[0]-1,:,k]
+                #salida[n_fil,:,k][::2] = image[image.shape[0]-1,:,k]
+                #salida[n_fil,:,k][1::2] = image[image.shape[0]-1,:,k]
+                for j in range(0, n_col, 2):
+                    salida[n_fil,j,k] = image[image.shape[0]-1,int(j/2),k]
+                    salida[n_fil,j+1,k] = image[image.shape[0]-1,int(j/2),k]
 
+        # Si el número de columnas era impar escribo la última columna la cual borré con n_col = n_col-1
         if col:
             for k in range(0, depth):
-                salida[:,n_col,k] = image[:,image.shape[1]-1,k]
+                #salida[:,n_col,k][::2] = image[:,image.shape[1]-1,k]
+                #salida[:,n_col,k][1::2] = image[:,image.shape[1]-1,k]
+                for i in range(0, n_fil, 2):
+                    salida[i,n_col,k] = image[int(i/2),image.shape[1]-1,k]
+                    salida[i+1,n_col,k] = image[int(i/2),image.shape[1]-1,k]
+
+                # Si se da el caso de que n_fil y n_col eran impares falta el último elemento por escribir en cada banda
+                if fil and col:
+                    salida[n_fil,n_col,k] = image[image.shape[0]-1,image.shape[1]-1,k]
 
     return salida
 
@@ -399,7 +412,7 @@ def laplacian_pyramid(image, levels = 4, border_type = cv2.BORDER_DEFAULT):
     for n in range(levels):
         gau_n_1 = upsampling3(gau_pyr[n+1], gau_pyr[n].shape[0], gau_pyr[n].shape[1])
         #gau_n_1 = 4*gaussian_blur(gau_n_1, 5, 5)
-        gau_n_1 = gaussian_blur(gau_n_1, 5, 5)
+        gau_n_1 = gaussian_blur(gau_n_1, 2, 2, 7, 7, border_type = border_type)
         lap_pyr.append(normaliza(gau_pyr[n] - gau_n_1))
     return lap_pyr
 
@@ -425,21 +438,26 @@ def ejercicio_2B(image):
 - image: imagen a tratar
 """
 def eleva_cuadrado(image):
+    salida = np.zeros(image.shape)
+
     if len(image.shape) == 2:
         for i in range(image.shape[0]):
             for j in range(image.shape[1]):
-                image[i][j] = image[i][j] * image[i][j]
+                salida[i][j] = image[i][j] * image[i][j]
     elif len(image.shape) == 3:
         for i in range(image.shape[0]):
             for j in range(image.shape[1]):
                 for k in range(image.shape[2]):
-                    image[i][j][k] = image[i][j][k] * image[i][j][k]
+                    salida[i][j][k] = image[i][j][k] * image[i][j][k]
+
+    return salida
 
 """ Supresión de de no máximos.
 - image: imagen a tratar
 """
 def non_maximum_supression(image):
-    res = np.copy(image)
+    res = np.zeros(image.shape)
+
     if len(image.shape) == 2:
         for i in range(image.shape[0]):
             for j in range(image.shape[1]):
@@ -511,28 +529,49 @@ def non_maximum_supression(image):
 
     return res
 
-""" Ejecución de ejemplos del ejercicio 2C.
-- image: imagen a tratar
+""" Función que selecciona las regiones.
+- image: imagen a tratar.
+- umbral: umbral para detectar la región.
+- radio: radio de los círculos.
 """
-def ejercicio_2C(image):
+def select_regions(image, umbral, radio):
+    res = np.copy(image)
+
+    if len(image.shape) == 2:
+        for i in range(image.shape[0]):
+            for j in range(image.shape[1]):
+                if image[i][j] > umbral:
+                    cv2.circle(res, (i,j), radio)
+
+    elif len(image.shape) == 3:
+        for i in range(image.shape[0]):
+            for j in range(image.shape[1]):
+                cv2.circle(res, (i, j), radio, (0, 0, 250))
+
+    return res
+
+
+""" Ejecución de ejemplos del ejercicio 2C.
+- image: imagen a tratar.
+- sigma: sigma usado en la laplaciana de gaussiana.
+- k: constante de incrementación de sigma.
+- umbral (op): umbral para detectar la región. Por defecto 120.
+- levels (op): número de escalas. Por defecto 4.
+"""
+def ejercicio_2C(image, sigma, k, umbral = 120, levels = 4):
     print("--- EJERCICIO 2C - ESPACIO DE ESCALAS LAPLACIANO ---")
     im = np.copy(image)
-    sigma = 1
-    N = 4
-    k = 1.2
-    UMBRAL = 140
 
-    for i in range(0, N):
+    for i in range(0, levels):
         im = sigma * sigma * laplacian_gaussian(im, 7)
         im = eleva_cuadrado(im)
         im = non_maximum_supression(im)
         sigma = k * sigma
 
-    im = normaliza(im)
-    cv2.circle()
-    pintaI(im)
+    im = normaliza(im, "Espacio de escalas laplaciano")
     print(im)
-
+    im = select_regions(im, umbral, int(17*sigma))
+    pintaI(im, "Espacio de escalas laplaciano")
     input("Pulsa 'Enter' para continuar\n")
 
 # EJERCICIO 3 #
@@ -581,69 +620,7 @@ def ejercicio_3C(vim, title = "Pirámide gaussiana de la hibridada", levels = 4,
 
 # Bonus 1 #
 
-""" Calcula correlación 1D de vector con señal. Devuelve la señal con correlación.
-- mascara: vector-máscara.
-- orig: Señal original.
-"""
-def correl(mascara, orig):
-    if len(orig.shape) == 2: # si es multibanda
-        NCH = orig.shape[1]
-        return np.stack((bonus2(mascara, orig[::,j]) for j in range(NCH)), axis = 1)
 
-    nueva = np.zeros(orig.shape) # Crea nueva imagen
-    N, M = len(orig), (len(mascara)-1)//2
-    extended = np.concatenate((orig[::-1], orig, orig[::-1]))
-
-    for i in range(N):
-        nueva[i] = np.dot(mascara, extended[i-M+N:i+M+N+1])
-    return nueva
-
-"""Calcula el vector máscara gaussiano. Devuelve el vector máscara gaussiano.
-- sigma: Parámetro σ de la función de densidad de la gaussiana.
-"""
-def gaussian_vector(sigma):
-    longitud = 1 + 2*int(3*sigma) # Calcula la longitud
-    mid = int(3*sigma)
-
-    f = lambda x: math.exp(-0.5*x*x/(sigma*sigma))
-    mascara = np.zeros(longitud)
-
-    # Rellena la máscara muestreando
-    for n in range(longitud):
-        x = n - mid
-        mascara[n] = f(x)
-
-    return mascara/np.sum(mascara)
-
-"""Convolución 2D usando máscaras separables. Devuelve la imagen convolucionada.
-- vX: Vector-máscara en dirección X.
-- vY: Vector-máscara en dirección Y.
-- im: Imagen a convolucionar.
-"""
-def bonus_1(vX, vY, im):
-    print("--- BONUS 1 - MÁSCARAS 2D CON CÓDIGO PROPIO. CUALQUIER MÁSCARA 2D DE NÚMEROS REALES USANDO MÁSCARAS SEPARABLES ---")
-    if not isBW(im): # Si tiene 3 canales
-      canales  = cv.split(im)
-      return cv.merge([bonus3(vX, vY, canal) for canal in canales])
-
-    nueva = im.copy()
-    N, M = im.shape
-    rVX = vX[::-1]
-    rVY = vY[::-1]
-
-    for j in range(M): # Aplica convolución por columnas
-        nueva[::,j] = correl(rVX, nueva[::, j])
-    for i in range(N): # Aplica convolución por filas
-        nueva[i,::] = correl(rVY, nueva[i, ::])
-
-    return nueva
-
-
-""" Combina ejemplos para mostrar funcionalidad en ejercicios bonus 1, 2 y 3. """
-def ejemploB123(im):
-  vGauss = bonus1(1)
-  gauss  = bonus3(vGauss, vGauss, im)
-  pintaMI((im, "Original"), (gauss, "Gaussiana propia sigma = 3"))
 
 
 # Bonus 2 #
@@ -708,9 +685,9 @@ def main():
     #ejercicio_1A(im_cat_c)
     #ejercicio_1B(im_cat_c)
 
-    ejercicio_2A(im_cat_c)
-    ejercicio_2B(im_cat_c)
-    ejercicio_2C(im_cat_c)
+    #ejercicio_2A(im_cat_c)
+    #ejercicio_2B(im_cat_c)
+    ejercicio_2C(im_cat_c, 1, 1.2, 160, 4)
 
     print("--- EJERCICIO 3A - FUNCIÓN 'hybridize_images' IMPLEMENTADA ---")
 
