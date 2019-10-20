@@ -37,7 +37,7 @@ def leer_imagen(file_name, flag_color = 1):
 - image_title (op): título de la imagen. Por defecto ' '.
 """
 def normaliza(image, image_title = " "):
-    # En caso de que los máximos sean 255 o las mínimos 0 no iteramos en los  bucles
+    # En caso de que los máximos sean 255 o las mínimos 0 no iteramos en los bucles
     if len(image.shape) == 2:
         max = np.amax(image)
         min = np.amin(image)
@@ -243,11 +243,8 @@ def ejercicio_1A(image):
     # Máscaras de derivadas 1D
     tam_list = [3, 5]
     for tam in tam_list:
-        #imprimir_imagenes_titulos([derive_convolution(image, 1, 0, tam), derive_convolution(image, 0, 1, tam), derive_convolution(image, 1, 1, tam), derive_convolution(image, 2, 0, tam),
-        #                           derive_convolution(image, 0, 2, tam), derive_convolution(image, 2, 1, tam), derive_convolution(image, 1, 2, tam), derive_convolution(image, 2, 2, tam)],
-        #                          ['(1, 0)', '(0, 1)', '(1, 1)', '(2, 0)', '(0, 2)', '(2, 1)', '(1, 2)', '(2, 2)'], 3, 3, 'Máscaras de derivadas 1D con tamaño {}'.format(tam))
-        #imprimir_imagenes_titulos([derive_convolution(image, 0, 2, tam), derive_convolution(image, 2, 1, tam), derive_convolution(image, 1, 2, tam), derive_convolution(image, 2, 2, tam)],
-        #                          [(0, 2)', '(2, 1)', '(1, 2)', '(2, 2)'], 2, 2, 'Máscaras de derivadas 1D con tamaño {}'.format(tam))
+        #imprimir_imagenes_titulos([derive_convolution(image, 1, 0, tam), derive_convolution(image, 0, 1, tam)],
+        #                          ['(1, 0)', '(0, 1)'], 1, 2, 'Máscaras de derivadas 1D con tamaño {}'.format(tam))
         pintaI(derive_convolution(image, 1, 0, tam), '(1,0)')
         pintaI(derive_convolution(image, 0, 1, tam), '(0,1)')
         pintaI(derive_convolution(image, 1, 1, tam), '(1,1)')
@@ -265,10 +262,10 @@ def ejercicio_1A(image):
 def ejercicio_1B(image):
     print("--- EJERCICIO 1B -  LAPLACIANA DE GAUSSIANA ---")
     # PARA NORMALIZAR MULTIPLICO POR SIGMA^2
-    imprimir_imagenes_titulos([image, laplacian_gaussian(image, 7, border_type = cv2.BORDER_REPLICATE), laplacian_gaussian(image, 7, border_type = cv2.BORDER_REFLECT)],
-                       ['Original', 'σ = 1, REPLICATE', 'σ = 1, REFLECT'], 1, 3, 'Laplacian of gaussian')
-    imprimir_imagenes_titulos([image, 9*laplacian_gaussian(image, 19, border_type = cv2.BORDER_REPLICATE), 9*laplacian_gaussian(image, 19, border_type = cv2.BORDER_REFLECT)],
-                       ['Original', 'σ = 3, REPLICATE', 'σ = 3, REFLECT'], 1, 3, 'Laplacian of gaussian')
+    imprimir_imagenes_titulos([image, laplacian_gaussian(image, 7, border_type = cv2.BORDER_DEFAULT), laplacian_gaussian(image, 7, border_type = cv2.BORDER_REPLICATE), laplacian_gaussian(image, 7, border_type = cv2.BORDER_REFLECT)],
+                       ['Original', 'σ = 1, DEFAULT', 'σ = 1, REPLICATE', 'σ = 1, REFLECT'], 2, 2, 'Laplacian of gaussian with σ = 1')
+    imprimir_imagenes_titulos([image, 9*laplacian_gaussian(image, 19, border_type = cv2.BORDER_DEFAULT), 9*laplacian_gaussian(image, 19, border_type = cv2.BORDER_REPLICATE), 9*laplacian_gaussian(image, 19, border_type = cv2.BORDER_REFLECT)],
+                       ['Original', 'σ = 3, DEFAULT', 'σ = 3, REPLICATE', 'σ = 3, REFLECT'], 2, 2, 'Laplacian of gaussian with σ = 3')
     input("Pulsa 'Enter' para continuar\n")
 
 # EJERCICIO 2 #
@@ -416,24 +413,6 @@ def laplacian_pyramid(image, levels = 4, border_type = cv2.BORDER_DEFAULT):
         lap_pyr.append(normaliza(gau_pyr[n] - gau_n_1))
     return lap_pyr
 
-""" Ejecución de ejemplos del ejercicio 2A.
-- image: imagen a tratar
-"""
-def ejercicio_2A(image):
-    print("--- EJERCICIO 2A - GAUSSIAN PYRAMID ---")
-    gau_pyr = gaussian_pyramid(image, 4, cv2.BORDER_CONSTANT)
-    imprimeMI(gau_pyr, 'Pirámide gaussiana')
-    input("Pulsa 'Enter' para continuar\n")
-
-""" Ejecución de ejemplos del ejercicio 2B.
-- image: imagen a tratar
-"""
-def ejercicio_2B(image):
-    print("--- EJERCICIO 2B - LAPLACIAN PYRAMID ---")
-    lap_pyr = laplacian_pyramid(image, 4, cv2.BORDER_CONSTANT)
-    imprimeMI(lap_pyr, 'Pirámide laplaciana')
-    input("Pulsa 'Enter' para continuar\n")
-
 """ Eleva al cuadrado cada píxel.
 - image: imagen a tratar
 """
@@ -550,6 +529,23 @@ def select_regions(image, umbral, radio):
 
     return res
 
+""" Ejecución de ejemplos del ejercicio 2A.
+- image: imagen a tratar
+"""
+def ejercicio_2A(image):
+    print("--- EJERCICIO 2A - GAUSSIAN PYRAMID ---")
+    gau_pyr = gaussian_pyramid(image, 4, cv2.BORDER_CONSTANT)
+    imprimeMI(gau_pyr, 'Pirámide gaussiana')
+    input("Pulsa 'Enter' para continuar\n")
+
+""" Ejecución de ejemplos del ejercicio 2B.
+- image: imagen a tratar
+"""
+def ejercicio_2B(image):
+    print("--- EJERCICIO 2B - LAPLACIAN PYRAMID ---")
+    lap_pyr = laplacian_pyramid(image, 4, cv2.BORDER_CONSTANT)
+    imprimeMI(lap_pyr, 'Pirámide laplaciana')
+    input("Pulsa 'Enter' para continuar\n")
 
 """ Ejecución de ejemplos del ejercicio 2C.
 - image: imagen a tratar.
@@ -569,7 +565,6 @@ def ejercicio_2C(image, sigma, k, umbral = 120, levels = 4):
         sigma = k * sigma
 
     im = normaliza(im, "Espacio de escalas laplaciano")
-    print(im)
     im = select_regions(im, umbral, int(17*sigma))
     pintaI(im, "Espacio de escalas laplaciano")
     input("Pulsa 'Enter' para continuar\n")
@@ -620,8 +615,76 @@ def ejercicio_3C(vim, title = "Pirámide gaussiana de la hibridada", levels = 4,
 
 # Bonus 1 #
 
+""" Función que realiza la correlación de la máscara 'kernel' sobre la imagen 'image'. Devuelve la imagen correlada.
+- image: imagen a tratar.
+- kernel: kernel a pasar por la imagen.
+"""
+def correlation1D(image, kernel):
+    print("imagen original")
+    print(image)
+    mitad = int(len(kernel)/2)
+    salida = np.zeros(image.shape)
+
+    if len(image.shape) == 2:
+        im = np.zeros((image.shape[0], image.shape[1] + 2*mitad))
+        im[:, mitad:im.shape[1]-mitad] = image
+
+        for i in range(0, image.shape[0]):
+            for j in range(0, image.shape[1]):
+                for n in range(0, len(kernel)):
+                    salida[i][j] += im[i][j-mitad+n] * kernel[n]
+        #salida = im[mitad:n_fil-mitad-1:, mitad:n_col-mitad-1:]
+
+    elif len(image.shape) == 3:
+        im = np.zeros((image.shape[0], image.shape[1] + 2*mitad, image.shape[2]))
+        im[:,:,0][:, mitad:im.shape[1]-mitad:1] = image[:,:,0]
+        im[:,:,1][:, mitad:im.shape[1]-mitad:1] = image[:,:,1]
+        im[:,:,2][:, mitad:im.shape[1]-mitad:1] = image[:,:,2]
+        print("imagen immmmmmmmmmmmmmmmmmmmmmmmm")
+        print(im)
+
+        for i in range(0, image.shape[0]):
+            for j in range(0, image.shape[1]):
+                for k in range(0, image.shape[2]):
+                    for n in range(0, len(kernel)):
+                        salida[i][j][k] += im[i][j-mitad+n][k] * kernel[n]
+        print("salidaaa")
+        print(salida)
+        #salida = im[mitad:im.shape[0]-mitad, mitad:im.shape[1]-mitad,]
+        #salida[:,:,0] = im[:,:,0][mitad:im.shape[0]-mitad, mitad:im.shape[1]-mitad]
+        #salida[:,:,1] = im[:,:,1][mitad:im.shape[0]-mitad, mitad:im.shape[1]-mitad]
+        #salida[:,:,2] = im[:,:,2][mitad:im.shape[0]-mitad, mitad:im.shape[1]-mitad]
+
+    return salida
 
 
+""" Función que realiza una convolución 2D con máscaras separables. Devuelve la imagen convolucionada.
+- image: imagen a tratar.
+- kernel_x: kernel en las dirección X.
+- kernel_y: kernel en las dirección Y.
+"""
+def convolution2D(image, kernel_x, kernel_y):
+    salida = np.copy(image)
+    kernel_x = cv2.flip(kernel_x, -1)
+    kernel_y = cv2.flip(kernel_y, -1)
+
+    salida = correlation1D(salida, kernel_x)
+    salida = np.transpose(salida)
+    salida = correlation1D(salida, kernel_y)
+    salida = np.transpose(salida)
+    salida = normaliza(salida)
+
+    return salida
+
+""" Ejecución del bonus 1.
+- image: imagen a tratar.
+"""
+def bonus_1(image):
+    kx = ky = cv2.getGaussianKernel(7, 1)
+    im = convolution2D(image, kx, ky)
+    print("aaaaaaaaaaaaaaaa")
+    print(im)
+    pintaI(im, "Convolución con máscaras separables (Bonus 1)")
 
 # Bonus 2 #
 
@@ -687,8 +750,8 @@ def main():
 
     #ejercicio_2A(im_cat_c)
     #ejercicio_2B(im_cat_c)
-    ejercicio_2C(im_cat_c, 1, 1.2, 160, 4)
-
+    #ejercicio_2C(im_cat_c, 1, 1.2, 160, 4)
+    """
     print("--- EJERCICIO 3A - FUNCIÓN 'hybridize_images' IMPLEMENTADA ---")
 
     print("--- EJERCICIO 3B - MOSTRANDO PAREJAS DE IMÁGENES HIBRIDADAS ---")
@@ -715,13 +778,14 @@ def main():
     #ejercicio_3C(vim_4, "Pirámide gaussiana Pez - Submarino")
     #ejercicio_3C(vim_5, "Pirámide gaussiana Einstein - Marilyn")
     input("Pulsa 'Enter' para continuar\n")
+    """
 
-    #bonus_1()
-    bonus_2()
+    bonus_1(im_cat_c)
+    #bonus_2()
     im_1a, im_1b = leer_imagen("data/guitarra.png", 1), leer_imagen("data/violin.png", 1)
     im_2a, im_2b = leer_imagen("data/trompeta.jpg", 1), leer_imagen("data/saxofon.jpg", 1)
-    bonus_3(im_1a, im_1b, 9, 9, "Guitarra - Violín")
-    bonus_3(im_2a, im_2b, 3, 7, "Trompeta - Saxofón")
+    #bonus_3(im_1a, im_1b, 9, 9, "Guitarra - Violín")
+    #bonus_3(im_2a, im_2b, 3, 7, "Trompeta - Saxofón")
 
 if __name__ == "__main__":
 	main()
