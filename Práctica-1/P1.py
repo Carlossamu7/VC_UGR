@@ -21,11 +21,11 @@ from matplotlib import pyplot as plt
 """
 def leer_imagen(file_name, flag_color = 1):
     if flag_color == 0:
-        print('Leyendo ' + file_name + ' en gris')
+        print("Leyendo " + file_name + " en gris")
     elif flag_color==1:
-        print('Leyendo ' + file_name + ' en color')
+        print("Leyendo " + file_name + " en color")
     else:
-        print('flag_color debe ser 0 o 1')
+        print("flag_color debe ser 0 o 1")
 
     img = cv2.imread(file_name, flag_color)
 
@@ -69,16 +69,16 @@ def normaliza(image, image_title = " "):
 - window_title (op): título de la ventana. Por defecto 'Ejercicio'
 """
 def pintaI(image, flag_color=1, image_title = "Imagen", window_title = "Ejercicio"):
-    image = normaliza(image, image_title)        # normalizamos la matriz
+    image = normaliza(image, image_title)               # Normalizamos la matriz
     image = image.astype(np.uint8)
-    plt.figure(0).canvas.set_window_title(window_title)  # Ponemos nombre a la ventana
+    plt.figure(0).canvas.set_window_title(window_title) # Ponemos nombre a la ventana
     if flag_color == 0:
         plt.imshow(image, cmap = "gray")
     else:
         plt.imshow(image)
-    plt.title(image_title)  # Ponemos nombre a la imagen
+    plt.title(image_title)              # Ponemos nombre a la imagen
     plt.show()
-    image = image.astype(np.float64)
+    image = image.astype(np.float64)    # Devolvemos su formato
 
     #cv2.imshow(image_title, image)
     #cv2.waitKey(0)
@@ -109,10 +109,7 @@ def imprimir_imagenes_titulos(image_list, image_title_list, rows, columns, flag_
     # Se igualan los tamaños de las Imagenes
     fig = plt.figure(0)
     fig.canvas.set_window_title(window_title)
-
-    #print(image_list[0])
-    #print(np.amax(image_list[0])
-    #print(np.amin(image_list[0])
+    
     for i in range(len(image_list)):
         normaliza(image_list[i], image_title_list[i])
         image_list[i] = image_list[i].astype(np.uint8)
@@ -301,7 +298,7 @@ def subsampling(image):
 - n_fil: número de filas de la matriz resultante.
 - n_col: número de columnas de la matriz resultante.
 """
-def upsampling(image, n_fil, n_col):
+def upsampling_v1(image, n_fil, n_col):
     depth = image.shape[2]
     cp = np.zeros((n_fil, n_col, depth))
 
@@ -320,7 +317,7 @@ def upsampling(image, n_fil, n_col):
     return cp
 
 # Sólo vale si la matriz tiene tamaño par.
-def upsampling2(image, n_fil, n_col):
+def upsampling_v2(image, n_fil, n_col):
     depth = image.shape[2]
     salida = np.zeros((n_fil, n_col, depth))
 
@@ -332,7 +329,7 @@ def upsampling2(image, n_fil, n_col):
 
     return salida
 
-def upsampling3(image, n_fil, n_col):
+def upsampling(image, n_fil, n_col):
     fil = False
     col = False
 
@@ -445,8 +442,8 @@ def laplacian_pyramid(image, levels = 4, border_type = cv2.BORDER_DEFAULT):
     gau_pyr = gaussian_pyramid(image, levels+1, border_type)
     lap_pyr = []
     for n in range(levels):
-        gau_n_1 = upsampling3(gau_pyr[n+1], gau_pyr[n].shape[0], gau_pyr[n].shape[1])
-        #gau_n_1 = 4*gaussian_blur(gau_n_1, 5, 5)   # Otra opción para la laplaciana: poniendo 0s.
+        gau_n_1 = upsampling(gau_pyr[n+1], gau_pyr[n].shape[0], gau_pyr[n].shape[1])
+        #gau_n_1 = 4*gaussian_blur(gau_n_1, 1, 1, 7, 7)   # Otra opción para la laplaciana: poniendo 0s.
         gau_n_1 = gaussian_blur(gau_n_1, 1, 1, 7, 7, border_type = border_type)
         lap_pyr.append(normaliza(gau_pyr[n] - gau_n_1, "Etapa {} de la pirámide gaussiana.".format(n)))
     return lap_pyr
@@ -784,45 +781,46 @@ def bonus_3(im_1, im_2, sigma_1, sigma_2, flag_color = 1, image_title = "Imagen 
 
 def main():
     flag_color = 1
-    im_cat = leer_imagen('data/cat.bmp', flag_color)   # Leemos la imagen en color
-    im_cat_gray = leer_imagen('data/cat.bmp', 0)   # Leemos la imagen en color
+    im_cat = leer_imagen('data/cat.bmp', flag_color)    # Leemos la imagen en color
+    im_cat_gray = leer_imagen('data/cat.bmp', 0)        # Leemos la imagen en color
 
-    #ejercicio_1A(im_cat, flag_color)
-    #ejercicio_1B(im_cat, flag_color)
+    ejercicio_1A(im_cat, flag_color)
+    ejercicio_1B(im_cat, flag_color)
 
-    #ejercicio_2A(im_cat, flag_color)
+    ejercicio_2A(im_cat, flag_color)
+    ejercicio_2B(im_cat_gray, 0)
     #ejercicio_2B(im_cat, flag_color)
-    ejercicio_2C(im_cat, 1, 1.2, 140, 4, 1)
-    """
-    print("--- EJERCICIO 3A - FUNCIÓN 'hybridize_images' IMPLEMENTADA ---")
+    ejercicio_2C(im_cat_gray, 1, 1.2, 140, 4, 0)
+    ejercicio_2C(im_cat, 1, 1.2, 140, 4, flag_color)
 
+    print("--- EJERCICIO 3A - FUNCIÓN 'hybridize_images' IMPLEMENTADA ---")
     print("--- EJERCICIO 3B - MOSTRANDO PAREJAS DE IMÁGENES HIBRIDADAS ---")
 
     # Leemos las imágenes en gris
     im_bird_g, im_plane_g = leer_imagen("data/bird.bmp", 0), leer_imagen("data/plane.bmp", 0)
     im_dog_g, im_cat_g = leer_imagen("data/dog.bmp", 0), leer_imagen("data/cat.bmp", 0)
     im_bicycle_g, im_motorcycle_g = leer_imagen("data/bicycle.bmp", 0), leer_imagen("data/motorcycle.bmp", 0)
-    im_fish_g, im_submarine_g = leer_imagen("data/fish.bmp", 0), leer_imagen("data/submarine.bmp", 0)
-    im_einstein_g, im_marilyn_g = leer_imagen("data/einstein.bmp", 0), leer_imagen("data/marilyn.bmp", 0)
+    #im_fish_g, im_submarine_g = leer_imagen("data/fish.bmp", 0), leer_imagen("data/submarine.bmp", 0)
+    #im_einstein_g, im_marilyn_g = leer_imagen("data/einstein.bmp", 0), leer_imagen("data/marilyn.bmp", 0)
 
     # Ejecución de la hibridación y mostrado de imágenes
     vim_1 = ejercicio_3_2(im_bird_g, im_plane_g, 3, 5, "Avión - Pájaro")
     vim_2 = ejercicio_3_2(im_dog_g, im_cat_g, 9, 9, "Gato - Perro")
     vim_3 = ejercicio_3_2(im_bicycle_g, im_motorcycle_g, 9, 5, "Bicicleta - Moto")
-    vim_4 = ejercicio_3_2(im_fish_g, im_submarine_g, 7, 7, "Pez - Submarino")
-    vim_5 = ejercicio_3_2(im_einstein_g, im_marilyn_g, 3, 3, "Einstein - Marilyn")
+    #vim_4 = ejercicio_3_2(im_fish_g, im_submarine_g, 7, 7, "Pez - Submarino")
+    #vim_5 = ejercicio_3_2(im_einstein_g, im_marilyn_g, 3, 3, "Einstein - Marilyn")
     input("Pulsa 'Enter' para continuar\n")
 
     print("--- EJERCICIO 3C - MOSTRANDO PIRÁMIDES GAUSSIANAS DE LAS IMÁGENES HIBRIDADAS ---")
     ejercicio_3_3(vim_1, "Pirámide gaussiana Avión - Pájaro")
     ejercicio_3_3(vim_2, "Pirámide gaussiana Gato - Perro")
     ejercicio_3_3(vim_3, "Pirámide gaussiana Bicicleta - Moto")
-    ejercicio_3_3(vim_4, "Pirámide gaussiana Pez - Submarino")
-    ejercicio_3_3(vim_5, "Pirámide gaussiana Einstein - Marilyn")
+    #ejercicio_3_3(vim_4, "Pirámide gaussiana Pez - Submarino")
+    #ejercicio_3_3(vim_5, "Pirámide gaussiana Einstein - Marilyn")
     input("Pulsa 'Enter' para continuar\n")
 
     print("--- BONUS 1 - CONVOLUCIÓN 2D CON MÁSCARAS SEPARABLES 2D DE NÚMEROS REALES ---")
-    # usar una de las siguientes máscaras
+    # Voy a ejecutar el bonus 1 3 veces: gaussiana a color y en B/N y getDerivKernels de orden (1,1)
     print("Versiones gris y color con máscara gaussiana con σ=1 y tam=7")
     kx = ky = cv2.getGaussianKernel(7, 1)
     bonus_1(im_cat_gray, kx, ky, 0)
@@ -830,14 +828,15 @@ def main():
     print("Versión gris con máscara de derivada de órden ({}, {}) y k_size = {}".format(1, 1, 7))
     kx, ky = cv2.getDerivKernels(1, 1, 7, normalize = True)
     bonus_1(im_cat_gray, kx, ky, 0)
-    """
-    #bonus_2()
 
+    bonus_2()
+
+    # Bonus 3. Muestro 2 ejemplos, el más intersante es el de la guitarra y el violín.
     flag_my_img = 1
     im_1a, im_1b = leer_imagen("data/guitarra.png", flag_my_img), leer_imagen("data/violin.png", flag_my_img)
     im_2a, im_2b = leer_imagen("data/trompeta.jpg", flag_my_img), leer_imagen("data/saxofon.jpg", flag_my_img)
-    #bonus_3(im_1a, im_1b, 9, 9, flag_my_img, "Guitarra - Violín")
-    #bonus_3(im_2a, im_2b, 3, 7, flag_my_img, "Trompeta - Saxofón")
+    bonus_3(im_1a, im_1b, 9, 9, flag_my_img, "Guitarra - Violín")
+    bonus_3(im_2a, im_2b, 3, 7, flag_my_img, "Trompeta - Saxofón")
 
 if __name__ == "__main__":
 	main()
