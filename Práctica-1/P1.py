@@ -92,24 +92,6 @@ def leer_lista_imagenes(file_name_list, flag_color = 1):
 
     return image_list
 
-""" Las imágenes tienen que ser del mismo tipo ya que si no nos da el error:
-        ValueError: all the input arrays must have same number of dimensions
-    No es lo mismo la matriz de una imagen a color que necesita 3 dimensiones que una en grises
-- image_list: lista de imágenes a concatenar.
-- horizontal (op): modo de concatenación. 0-vertical y en otro caso horizontal. Por defecto horizontal.
-"""
-def pintaMI(image_list, horizontal=1):
-    if horizontal != 0: # Salvo que sea 0-vertical, ponemos por defecto 1-horizontal.
-        horizontal = 1
-
-    concatenated_img = cv2.resize(image_list[0], (300,300), interpolation = cv2.INTER_AREA)
-
-    for i in np.arange(1,len(image_list)):
-        aux = cv2.resize(image_list[i], (300,300), interpolation = cv2.INTER_AREA)
-        concatenated_img = np.concatenate((concatenated_img, aux), axis=horizontal)
-
-    pintaI(concatenated_img, "Imágenes concatenadas")
-
 """ Muestra múltiples imágenes en una ventena Matplotlib.
 - image_list: La lista de imágenes.
 - image_title_list: Lista de títulos de las imágenes.
@@ -189,12 +171,14 @@ def convolution(image, kernel_x, kernel_y, border_type = cv2.BORDER_DEFAULT):
 """ Aplica una máscara Gaussiana 2D. Devuelve la imagen con las máscara aplicada.
 - image: la imagen a tratar.
 - sigma_x: sigma en la dirección X.
-- sigma_y: sigma en la dirección Y.
+- sigma_y (op): sigma en la dirección Y. Por defecto sigma_y = sigma_x
 - k_size_x (op): tamaño del kernel en dirección X (positivo e impar). Por defecto es 0, se obtiene a través de sigma.
 - k_size_y (op): tamaño del kernel en dirección Y (positivo e impar). Por defecto es 0, se obtiene a través de sigma.
 - border_type (op): tipo de bordes. BORDER_DEFAULT.
 """
-def gaussian_blur(image, sigma_x, sigma_y, k_size_x = 0, k_size_y = 0, border_type = cv2.BORDER_DEFAULT):
+def gaussian_blur(image, sigma_x, sigma_y = 0, k_size_x = 0, k_size_y = 0, border_type = cv2.BORDER_DEFAULT):
+    if sigma_y == 0:
+        sigma_y = sigma_x
     if k_size_x == 0:
         k_size_x = int(6*sigma_x + 1)
     if k_size_y == 0:
@@ -307,6 +291,9 @@ def subsampling(image):
 - n_col: número de columnas de la matriz resultante.
 """
 def upsampling(image, n_fil, n_col):
+    print(image.shape)
+    print(n_fil)
+    print(n_col)
     depth = image.shape[2]
     cp = np.zeros((n_fil, n_col, depth))
 
@@ -337,9 +324,6 @@ def upsampling2(image, n_fil, n_col):
     return salida
 
 def upsampling3(image, n_fil, n_col):
-    depth = image.shape[2]
-    salida = np.zeros((n_fil, n_col, depth))
-
     fil = False
     col = False
 
@@ -351,36 +335,69 @@ def upsampling3(image, n_fil, n_col):
         n_col = n_col-1
         col = True
 
-    for k in range(0, depth):
+    if len(image.shape)==2:
+        salida = np.zeros((n_fil, n_col))
         # Relleno la matriz, en cada iteración escribo 4 elementos de la matriz de salida
         for i in range(0, n_fil, 2):
             for j in range(0, n_col, 2):
-                salida[i][j][k] = image[int(i/2), int(j/2), k]
-                salida[i+1][j][k] = image[int(i/2), int(j/2), k]
-                salida[i][j+1][k] = image[int(i/2), int(j/2), k]
-                salida[i+1][j+1][k] = image[int(i/2), int(j/2), k]
+                salida[i][j] = image[int(i/2)][int(j/2)]
+                salida[i+1][j] = image[int(i/2)][int(j/2)]
+                salida[i][j+1] = image[int(i/2)][int(j/2)]
+                salida[i+1][j+1] = image[int(i/2)][int(j/2)]
 
         # Si el número de filas era impar escribo la última fila la cual borré con n_fil = n_fil-1
         if fil:
-            for k in range(0, depth):
-                #salida[n_fil,:,k][::2] = image[image.shape[0]-1,:,k]
-                #salida[n_fil,:,k][1::2] = image[image.shape[0]-1,:,k]
-                for j in range(0, n_col, 2):
-                    salida[n_fil,j,k] = image[image.shape[0]-1,int(j/2),k]
-                    salida[n_fil,j+1,k] = image[image.shape[0]-1,int(j/2),k]
+            for j in range(0, n_col, 2):
+                salida[n_fil][j] = image[image.shape[0]-1][int(j/2)]
+                salida[n_fil][j+1] = image[image.shape[0]-1][int(j/2)]
 
         # Si el número de columnas era impar escribo la última columna la cual borré con n_col = n_col-1
         if col:
-            for k in range(0, depth):
-                #salida[:,n_col,k][::2] = image[:,image.shape[1]-1,k]
-                #salida[:,n_col,k][1::2] = image[:,image.shape[1]-1,k]
-                for i in range(0, n_fil, 2):
-                    salida[i,n_col,k] = image[int(i/2),image.shape[1]-1,k]
-                    salida[i+1,n_col,k] = image[int(i/2),image.shape[1]-1,k]
+            for i in range(0, n_fil, 2):
+                salida[i][n_col] = image[int(i/2)][image.shape[1]-1]
+                salida[i+1][n_col] = image[int(i/2)][image.shape[1]-1]
 
-                # Si se da el caso de que n_fil y n_col eran impares falta el último elemento por escribir en cada banda
-                if fil and col:
-                    salida[n_fil,n_col,k] = image[image.shape[0]-1,image.shape[1]-1,k]
+            # Si se da el caso de que n_fil y n_col eran impares falta el último elemento por escribir en cada banda
+            if fil and col:
+                salida[n_fil][n_col] = image[image.shape[0]-1][image.shape[1]-1]
+
+    if len(image.shape)==3:
+        salida = np.zeros((n_fil, n_col, image.shape[2]))
+
+        for k in range(0, image.shape[2]):
+            # Relleno la matriz, en cada iteración escribo 4 elementos de la matriz de salida
+            for i in range(0, n_fil, 2):
+                for j in range(0, n_col, 2):
+                    salida[i][j][k] = image[int(i/2)][int(j/2)][k]
+                    salida[i+1][j][k] = image[int(i/2)][int(j/2)][k]
+                    salida[i][j+1][k] = image[int(i/2)][int(j/2)][k]
+                    salida[i+1][j+1][k] = image[int(i/2)][int(j/2)][k]
+
+            # Si el número de filas era impar escribo la última fila la cual borré con n_fil = n_fil-1
+            if fil:
+                for k in range(0, image.shape[2]):
+                    #salida[n_fil,:,k][::2] = image[image.shape[0]-1,:,k]
+                    #salida[n_fil,:,k][1::2] = image[image.shape[0]-1,:,k]
+                    for j in range(0, n_col, 2):
+                        print(n_fil)
+                        print(j)
+                        print(image.shape)
+                        print(salida.shape)
+                        salida[n_fil][j][k] = image[image.shape[0]-1][int(j/2)][k]
+                        salida[n_fil][j+1][k] = image[image.shape[0]-1][int(j/2)][k]
+
+            # Si el número de columnas era impar escribo la última columna la cual borré con n_col = n_col-1
+            if col:
+                for k in range(0, image.shape[2]):
+                    #salida[:,n_col,k][::2] = image[:,image.shape[1]-1,k]
+                    #salida[:,n_col,k][1::2] = image[:,image.shape[1]-1,k]
+                    for i in range(0, n_fil, 2):
+                        salida[i][n_col,k] = image[int(i/2)][image.shape[1]-1][k]
+                        salida[i+1][n_col][k] = image[int(i/2)][image.shape[1]-1][k]
+
+                    # Si se da el caso de que n_fil y n_col eran impares falta el último elemento por escribir en cada banda
+                    if fil and col:
+                        salida[n_fil][n_col][k] = image[image.shape[0]-1][image.shape[1]-1][k]
 
     return salida
 
@@ -408,9 +425,9 @@ def laplacian_pyramid(image, levels = 4, border_type = cv2.BORDER_DEFAULT):
     lap_pyr = []
     for n in range(levels):
         gau_n_1 = upsampling3(gau_pyr[n+1], gau_pyr[n].shape[0], gau_pyr[n].shape[1])
-        #gau_n_1 = 4*gaussian_blur(gau_n_1, 5, 5)
+        #gau_n_1 = 4*gaussian_blur(gau_n_1, 5, 5)   # Otra opción para la laplaciana.
         gau_n_1 = gaussian_blur(gau_n_1, 2, 2, 7, 7, border_type = border_type)
-        lap_pyr.append(normaliza(gau_pyr[n] - gau_n_1))
+        lap_pyr.append(normaliza(gau_pyr[n] - gau_n_1, "Etapa {} de la pirámide gaussiana.".format(n)))
     return lap_pyr
 
 """ Eleva al cuadrado cada píxel.
@@ -520,12 +537,12 @@ def select_regions(image, umbral, radio):
         for i in range(image.shape[0]):
             for j in range(image.shape[1]):
                 if image[i][j] > umbral:
-                    cv2.circle(res, (i,j), radio)
+                    cv2.circle(res, (i,j), radio, 1)
 
     elif len(image.shape) == 3:
         for i in range(image.shape[0]):
             for j in range(image.shape[1]):
-                cv2.circle(res, (i, j), radio, (0, 0, 250))
+                cv2.circle(res, (i, j), radio, (0, 0, 250), 1)
 
     return res
 
@@ -567,6 +584,31 @@ def ejercicio_2C(image, sigma, k, umbral = 120, levels = 4):
     im = normaliza(im, "Espacio de escalas laplaciano")
     im = select_regions(im, umbral, int(17*sigma))
     pintaI(im, "Espacio de escalas laplaciano")
+    input("Pulsa 'Enter' para continuar\n")
+
+def ejercicio_2C_2(image, sigma, k, umbral = 120, levels = 4):
+    print("--- EJERCICIO 2C - ESPACIO DE ESCALAS LAPLACIANO ---")
+    if len(image.shape) == 2:
+        scale = np.zeros((levels + 1, image.shape[0], image.shape[1]))
+    elif len(image.shape) == 3:
+        scale = np.zeros((levels + 1, image.shape[0], image.shape[1], image.shape[2]))
+
+    scale[0] = np.copy(image)
+
+    for i in range(1, levels + 1):
+        scale[i] = sigma * sigma * laplacian_gaussian(scale[i-1], 7)
+        scale[i] = eleva_cuadrado(scale[i])
+        scale[i] = non_maximum_supression(scale[i])
+        sigma = k * sigma
+        scale[i] = normaliza(scale[i], "Escala laplaciana número {}".format(i))
+
+    for i in range(1, levels + 1):
+        scale[i] = select_regions(scale[i], umbral, int(17*sigma))
+        pintaI(scale[i], "Escala laplaciana número {}".format(i))
+
+
+    im = select_regions(image, umbral, int(17*sigma))
+    pintaI(im, "Espacio de escalas laplaciano, imagen original")
     input("Pulsa 'Enter' para continuar\n")
 
 # EJERCICIO 3 #
@@ -743,14 +785,14 @@ def bonus_3(im_1, im_2, sigma_1, sigma_2, image_title):
 ################
 
 def main():
-    im_cat_c = leer_imagen('data/cat.bmp', 1)   # Leemos la imagen en color
+    im_cat_c = leer_imagen('data/cat.bmp', 0)   # Leemos la imagen en color
 
     #ejercicio_1A(im_cat_c)
     #ejercicio_1B(im_cat_c)
 
     #ejercicio_2A(im_cat_c)
     #ejercicio_2B(im_cat_c)
-    #ejercicio_2C(im_cat_c, 1, 1.2, 160, 4)
+    ejercicio_2C_2(im_cat_c, 1, 1.2, 160, 4)
     """
     print("--- EJERCICIO 3A - FUNCIÓN 'hybridize_images' IMPLEMENTADA ---")
 
