@@ -109,7 +109,7 @@ def imprimir_imagenes_titulos(image_list, image_title_list, rows, columns, flag_
     # Se igualan los tamaños de las Imagenes
     fig = plt.figure(0)
     fig.canvas.set_window_title(window_title)
-    
+
     for i in range(len(image_list)):
         normaliza(image_list[i], image_title_list[i])
         image_list[i] = image_list[i].astype(np.uint8)
@@ -604,13 +604,16 @@ def ejercicio_2C(image, sigma, k, umbral = 120, levels = 4, flag_color = 1):
     scale[0] = np.copy(image)
 
     for i in range(1, levels + 1):
-        scale[i] = sigma * sigma * laplacian_gaussian(image, 5)
+        k_size = int(6*sigma)+1
+        if k_size % 2 == 0:
+            k_size = k_size + 1
+        scale[i] = sigma * sigma * laplacian_gaussian(image, k_size)
         scale[i] = eleva_cuadrado(scale[i])
         scale[i] = non_maximum_supression(scale[i])
         sigma = k * sigma
         scale[i] = normaliza(scale[i], "Escala laplaciana número {}".format(i))
         im[i] = np.copy(image)
-        im[i] = select_regions(im[i], scale[i], umbral, int(17*sigma))
+        im[i] = select_regions(im[i], scale[i], umbral, int(11*sigma))
         #pintaI(scale[i], flag_color, "Escala laplaciana número {}".format(i), "Espacio de escalas laplaciano")
         pintaI(im[i], flag_color, "Escala laplaciana número {} sobre la imagen original".format(i), "Espacio de escalas laplaciano")
 
@@ -649,9 +652,9 @@ def ejercicio_3_2(im1, im2, sigma1, sigma2, title = "Hibridación de imágenes")
 - vim: vector de imágenes resultante de la hibridación
 - title (op): título de la imagen. Por defecto "Pirámide gaussiana de la hibridada".
 - levels (op): niveles de la pirámide. Por defecto 4.
-- border_type (op): tipo de borde. Por defecto BORDER_CONSTANT.
+- border_type (op): tipo de borde. Por defecto BORDER_DEFAULT.
 """
-def ejercicio_3_3(vim, title = "Pirámide gaussiana de la hibridada", levels = 4, border_type = cv2.BORDER_CONSTANT):
+def ejercicio_3_3(vim, title = "Pirámide gaussiana de la hibridada", levels = 4, border_type = cv2.BORDER_DEFAULT):
     gau_pyr = gaussian_pyramid(vim[2], 4, border_type) # Construimos las pirámides gaussianas
     muestraMI(gau_pyr, 0, title)                       # Imprimimos las pirámides gaussianas (B/N)
     return gau_pyr
@@ -772,6 +775,8 @@ def bonus_3(im_1, im_2, sigma_1, sigma_2, flag_color = 1, image_title = "Imagen 
     # Hibrido y muestro las imágenes
     vim = hybridize_images(im_1, im_2, sigma_1, sigma_2)
     muestraMI(vim, flag_color, image_title)
+    gau_pyr = gaussian_pyramid(vim[2], 4) # Construimos las pirámides gaussianas
+    muestraMI(gau_pyr, 0, image_title)                       # Imprimimos las pirámides gaussianas (B/N)
     input("Pulsa 'Enter' para continuar\n")
 
 
@@ -783,15 +788,16 @@ def main():
     flag_color = 1
     im_cat = leer_imagen('data/cat.bmp', flag_color)    # Leemos la imagen en color
     im_cat_gray = leer_imagen('data/cat.bmp', 0)        # Leemos la imagen en color
-
+    """
     ejercicio_1A(im_cat, flag_color)
     ejercicio_1B(im_cat, flag_color)
 
     ejercicio_2A(im_cat, flag_color)
     ejercicio_2B(im_cat_gray, 0)
     #ejercicio_2B(im_cat, flag_color)
-    ejercicio_2C(im_cat_gray, 1, 1.2, 140, 4, 0)
-    ejercicio_2C(im_cat, 1, 1.2, 140, 4, flag_color)
+    """
+    ejercicio_2C(im_cat_gray, 1, 1.2, 100, 4, 0)
+    ejercicio_2C(im_cat, 1, 1.2, 100, 4, flag_color)
 
     print("--- EJERCICIO 3A - FUNCIÓN 'hybridize_images' IMPLEMENTADA ---")
     print("--- EJERCICIO 3B - MOSTRANDO PAREJAS DE IMÁGENES HIBRIDADAS ---")
