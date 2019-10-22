@@ -614,7 +614,7 @@ def ejercicio_2C(image, sigma, k, umbral = 120, levels = 4, flag_color = 1):
         scale[i] = normaliza(scale[i], "Escala laplaciana número {}".format(i))
         im[i] = np.copy(image)
         im[i] = select_regions(im[i], scale[i], umbral, int(11*sigma))
-        #pintaI(scale[i], flag_color, "Escala laplaciana número {}".format(i), "Espacio de escalas laplaciano")
+        #pintaI(scale[i], flag_color, "Supresión de no máximos en la escala laplaciana número {}".format(i), "Espacio de escalas laplaciano")
         pintaI(im[i], flag_color, "Escala laplaciana número {} sobre la imagen original".format(i), "Espacio de escalas laplaciano")
 
     input("Pulsa 'Enter' para continuar\n")
@@ -774,9 +774,9 @@ def bonus_3(im_1, im_2, sigma_1, sigma_2, flag_color = 1, image_title = "Imagen 
     im_2 = cv2.resize(im_2, (min_anc, min_alt), im_2, interpolation = cv2.INTER_CUBIC)
     # Hibrido y muestro las imágenes
     vim = hybridize_images(im_1, im_2, sigma_1, sigma_2)
-    muestraMI(vim, flag_color, image_title)
-    gau_pyr = gaussian_pyramid(vim[2], 4) # Construimos las pirámides gaussianas
-    muestraMI(gau_pyr, 0, image_title)                       # Imprimimos las pirámides gaussianas (B/N)
+    muestraMI(vim, flag_color, image_title) # Mostramos la hibridación
+    gau_pyr = gaussian_pyramid(vim[2], 4)   # Construimos las pirámides gaussianas
+    muestraMI(gau_pyr, 0, image_title)      # Imprimimos las pirámides gaussianas
     input("Pulsa 'Enter' para continuar\n")
 
 
@@ -788,19 +788,19 @@ def main():
     flag_color = 1
     im_cat = leer_imagen('data/cat.bmp', flag_color)    # Leemos la imagen en color
     im_cat_gray = leer_imagen('data/cat.bmp', 0)        # Leemos la imagen en color
-    """
+    
     ejercicio_1A(im_cat, flag_color)
     ejercicio_1B(im_cat, flag_color)
 
     ejercicio_2A(im_cat, flag_color)
     ejercicio_2B(im_cat_gray, 0)
     #ejercicio_2B(im_cat, flag_color)
-    """
+
     ejercicio_2C(im_cat_gray, 1, 1.2, 100, 4, 0)
     ejercicio_2C(im_cat, 1, 1.2, 100, 4, flag_color)
 
     print("--- EJERCICIO 3A - FUNCIÓN 'hybridize_images' IMPLEMENTADA ---")
-    print("--- EJERCICIO 3B - MOSTRANDO PAREJAS DE IMÁGENES HIBRIDADAS ---")
+    print("--- EJERCICIO 3.2 - MOSTRANDO PAREJAS DE IMÁGENES HIBRIDADAS ---")
 
     # Leemos las imágenes en gris
     im_bird_g, im_plane_g = leer_imagen("data/bird.bmp", 0), leer_imagen("data/plane.bmp", 0)
@@ -817,7 +817,7 @@ def main():
     #vim_5 = ejercicio_3_2(im_einstein_g, im_marilyn_g, 3, 3, "Einstein - Marilyn")
     input("Pulsa 'Enter' para continuar\n")
 
-    print("--- EJERCICIO 3C - MOSTRANDO PIRÁMIDES GAUSSIANAS DE LAS IMÁGENES HIBRIDADAS ---")
+    print("--- EJERCICIO 3.3 - MOSTRANDO PIRÁMIDES GAUSSIANAS DE LAS IMÁGENES HIBRIDADAS ---")
     ejercicio_3_3(vim_1, "Pirámide gaussiana Avión - Pájaro")
     ejercicio_3_3(vim_2, "Pirámide gaussiana Gato - Perro")
     ejercicio_3_3(vim_3, "Pirámide gaussiana Bicicleta - Moto")
