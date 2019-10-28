@@ -1,0 +1,8 @@
+KERAS
+
+Api de alto nivel. (Tensorflow, Theano)
+Pytorch
+
+Nosotros vamos a usar Keras con Tensorflow.
+
+¿qué es una red neuronal convolucional? Tiene ancho, alto y grueso (nº bandas después no tiene por qué).
