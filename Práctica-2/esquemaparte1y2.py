@@ -133,6 +133,8 @@ print('Test accuracy:', score[1])
 # después y comparar resultados entre no usar mejoras y sí usarlas.
 weights = model.get_weights()
 
+#Hay que darle caña
+
 #########################################################################
 ###################### ENTRENAMIENTO DEL MODELO #########################
 #########################################################################
