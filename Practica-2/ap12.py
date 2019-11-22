@@ -140,7 +140,7 @@ def optimizadorCompilador(model):
   model.compile(loss=keras.losses.categorical_crossentropy,
             optimizer=SGD (lr = 0.01, decay = 1e-6, momentum = 0.9, nesterov = True),
             metrics=['accuracy'])
-  
+
   # Teniendo el modelo base guardamos los pesos aleatorios con los que empieza la red, para poder
   # reestablecerlos después y comparar resultados entre no usar mejoras y sí usarlas.
   weights = model.get_weights()
@@ -151,7 +151,7 @@ def optimizadorCompilador(model):
 #########################################################################
 
 """ Definimos el entrenamiento del modelo.
-- model: 
+- model:
 """
 def train(model, x_train, y_train, x_test, y_test, batch_size=128, epochs=20, verbose=0):
   # Entrenamos el modelo con fit que recibe las imágenes de entrenamiento directamente.
@@ -187,7 +187,7 @@ def ejercicio1():
 
   x_train, y_train, x_test, y_test = cargarImagenes()
   model = model_baseNet(input_shape)
-  model.summary               # Descripción del modelo
+  print(model.summary)        # Descripción del modelo
   weights = optimizadorCompilador(model)
   model.set_weights(weights)  # Reestablecemos los pesos
 
@@ -233,7 +233,7 @@ def ejercicio2():
 
   x_train , y_train, x_test, y_test = cargarImagenes()
   model = model_baseNet_mejora1(input_shape)
-  model.summary               # Descripción del modelo
+  print(model.summary)        # Descripción del modelo
   weights = optimizadorCompilador(model)
   model.set_weights(weights)  # Reestablecemos los pesos
   histograma = train(model, x_train, y_train, x_test, y_test, batch_size, epochs, verbose=1)
