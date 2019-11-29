@@ -31,7 +31,7 @@ from keras.datasets import cifar100
 from keras.preprocessing.image import ImageDataGenerator
 # Import Early Stopping
 from keras.callbacks import EarlyStopping
-# Show no TensorFlow deprecation warnings
+# TensorFlow no muestra warnings
 import tensorflow.compat.v1 as tf
 tf.logging.set_verbosity(tf.logging.ERROR)
 
@@ -136,10 +136,13 @@ def model_baseNet(input_shape=(32,32,3)):
 def optimizadorCompilador(model):
   # Definimos la función pérdida a minimizar.Clasificación multiclase -> categorical_crossentropy
   # Argumento metrics las métricas que se quieren calcular a lo largo de todas las épocas.
-  # Usamos gradiente descendente estocástico.
   model.compile(loss=keras.losses.categorical_crossentropy,
             optimizer=SGD (lr = 0.01, decay = 1e-6, momentum = 0.9, nesterov = True),
             metrics=['accuracy'])
+  
+  # Usar uno de los siguientes optimizadores:
+  # optimizer=optimizer=keras.optimizers.Adadelta()
+  # optimizer=SGD (lr = 0.01, decay = 1e-6, momentum = 0.9, nesterov = True)
   
   # Teniendo el modelo base guardamos los pesos aleatorios con los que empieza la red, para poder
   # reestablecerlos después y comparar resultados entre no usar mejoras y sí usarlas.
@@ -151,11 +154,17 @@ def optimizadorCompilador(model):
 #########################################################################
 
 """ Definimos el entrenamiento del modelo.
-- model: 
+- model: el modelo.
+- x_train: datos de entrenamiento.
+- y_train: etiquetas de los datos de entrenamiento.
+- datagen: nuestro ImageDataGenerator.
+- batch_size: 
+- ephocs: épocas.
+- verbose: nos muestra información al hacer el ajuste.
 """
 def train(model, x_train, y_train, datagen, batch_size=64, epochs=20, verbose=0):
   # Entrenamos el modelo con fit que recibe las imágenes de entrenamiento directamente.
-  #histograma = model.fit(x_train, y_train,
+  # histograma = model.fit(x_train, y_train,
   #      batch_size=batch_size,
   #      epochs=epochs,
   #      verbose=verbose,
@@ -164,14 +173,14 @@ def train(model, x_train, y_train, datagen, batch_size=64, epochs=20, verbose=0)
   train_data = datagen.flow(x_train, y_train, batch_size=batch_size, subset='training')
   validation_data = datagen.flow(x_train, y_train, batch_size=batch_size, subset='validation')
 
-  histograma = model.fit_generator(train_data,
-                steps_per_epoch = len(x_train)*0.9/batch_size,
-                epochs = epochs,
-                verbose = verbose,
-                validation_data = validation_data,
-                validation_steps = len (x_train)*0.1/batch_size)
+  hist = model.fit_generator(train_data,
+             steps_per_epoch = len(x_train)*0.9/batch_size,
+             epochs = epochs,
+             verbose = verbose,
+             validation_data = validation_data,
+             validation_steps = len (x_train)*0.1/batch_size)
 
-  return histograma
+  return hist
 
 #########################################################################
 ################ PREDICCIÓN SOBRE EL CONJUNTO DE TEST ###################
@@ -192,7 +201,7 @@ def prediccion(model, x_test, y_test):
 def ejercicio1():
   input_shape=(32, 32, 3)     # Imágenes en color con 3 canales de 32x32 píxeles.
   num_classes = 25            # Número de clases es 25
-  batch_size = 64            # Tamaño de batch potencia de 2
+  batch_size = 64             # Tamaño de batch potencia de 2
   epochs = 20                 # Elegimos número de épocas
 
   x_train, y_train, x_test, y_test = cargarImagenes()
@@ -204,16 +213,12 @@ def ejercicio1():
   weights = optimizadorCompilador(model)
   model.set_weights(weights)  # Reestablecemos los pesos
 
-  histograma = train(model, x_train, y_train, datagen, batch_size, epochs, verbose=1)
-  print(histograma)
-  mostrarEvolucion(histograma)
+  hist = train(model, x_train, y_train, datagen, batch_size, epochs, verbose=1)
+  print(hist)
+  mostrarEvolucion(hist)
   prediccion(model, x_test, y_test)
 
 ejercicio1()
-
-
-# my_model.fit_generator(datagen.flow(imagenes_train, etiquetas_train, batch_size = 32, subset = 'training') ,
-#                        validation_data = datagen.flow(imagenes_train, etiquetas_train, batch_size = 32, subset = 'validation'))
 
 #########################################################################
 ########################## MEJORA DEL MODELO ############################
@@ -224,9 +229,10 @@ ejercicio1()
 
 """ Ejercicio2 - NORMALIZACIÓN """
 def ejercicio2_normalizacion():
+  print("NORMALIZACIÓN")
   input_shape=(32, 32, 3)     # Imágenes en color con 3 canales de 32x32 píxeles.
   num_classes = 25            # Número de clases es 25
-  batch_size = 64             # Tamaño de batch potencia de 2
+  batch_size = 32             # Tamaño de batch potencia de 2
   epochs = 20                 # Elegimos número de épocas
 
   x_train, y_train, x_test, y_test = cargarImagenes()
@@ -240,11 +246,11 @@ def ejercicio2_normalizacion():
   weights = optimizadorCompilador(model)
   model.set_weights(weights)  # Reestablecemos los pesos
 
-  histograma = train(model, x_train, y_train, datagen_train, batch_size, epochs, verbose=1)
-  print(histograma)
-  mostrarEvolucion(histograma)
-  predicciones = model.predict_generator(datagen_test.flow(x_test, batch_size = 1, shuffle = False), steps = len(x_test))
-  score = calcularAccuracy(y_test, predicciones)
+  hist = train(model, x_train, y_train, datagen_train, batch_size, epochs, verbose=1)
+  print(hist)
+  mostrarEvolucion(hist)
+  preds = model.predict_generator(datagen_test.flow(x_test, batch_size = 1, shuffle = False), steps = len(x_test))
+  score = calcularAccuracy(y_test, preds)
   print('Test accuracy:', score)
 
 ejercicio2_normalizacion()
@@ -254,6 +260,7 @@ ejercicio2_normalizacion()
 
 """ Ejercicio2 - AUMENTO DE DATOS. """
 def ejercicio2_aumento():
+  print("AUMENTO DE DATOS")
   input_shape=(32, 32, 3)     # Imágenes en color con 3 canales de 32x32 píxeles.
   num_classes = 25            # Número de clases es 25
   batch_size = 64             # Tamaño de batch potencia de 2
@@ -270,38 +277,84 @@ def ejercicio2_aumento():
   weights = optimizadorCompilador(model)
   model.set_weights(weights)  # Reestablecemos los pesos
 
-  histograma = train(model, x_train, y_train, datagen_train, batch_size, epochs, verbose=1)
-  print(histograma)
-  mostrarEvolucion(histograma)
-  predicciones = model.predict_generator(datagen_test.flow(x_test, batch_size = 1, shuffle = False), steps = len(x_test))
-  score = calcularAccuracy(y_test, predicciones)
+  hist = train(model, x_train, y_train, datagen_train, batch_size, epochs, verbose=1)
+  print(hist)
+  mostrarEvolucion(hist)
+  preds = model.predict_generator(datagen_test.flow(x_test, batch_size = 1, shuffle = False), steps = len(x_test))
+  score = calcularAccuracy(y_test, preds)
   print('Test accuracy:', score)
 
 ejercicio2_aumento()
+
+""" Ejercicio2_v2 - AUMENTO DE DATOS. """
+def ejercicio2_aumento_v2():
+  print("AUMENTO DE DATOS - V2")
+  input_shape=(32, 32, 3)     # Imágenes en color con 3 canales de 32x32 píxeles.
+  num_classes = 25            # Número de clases es 25
+  batch_size = 32             # Tamaño de batch potencia de 2
+  epochs = 20                 # Elegimos número de épocas
+
+  x_train, y_train, x_test, y_test = cargarImagenes()
+  datagen_train = ImageDataGenerator(featurewise_center=True, featurewise_std_normalization=True,
+                                     vertical_flip=True, zoom_range=0.7, validation_split=0.1)
+  datagen_test = ImageDataGenerator(featurewise_center=True, featurewise_std_normalization=True)
+  datagen_train.fit(x_train)
+  datagen_test.fit(x_train)
+
+  model = model_baseNet(input_shape)
+  model.summary()             # Descripción del modelo
+  weights = optimizadorCompilador(model)
+  model.set_weights(weights)  # Reestablecemos los pesos
+
+  hist = train(model, x_train, y_train, datagen_train, batch_size, epochs, verbose=1)
+  print(hist)
+  mostrarEvolucion(hist)
+  preds = model.predict_generator(datagen_test.flow(x_test, batch_size = 1, shuffle = False), steps = len(x_test))
+  score = calcularAccuracy(y_test, preds)
+  print('Test accuracy:', score)
+
+#ejercicio2_aumento_v2()
 
 # RED MÁS PROFUNDA. Experimente agregando más capas convolucionales y totalmente conectadas.
 # Agregue más capas conv con canales de salida crecientes y también agregue más capas lineales (fc).
 # No coloque una capa de maxpool después de cada capa conv ya que conduce a una pérdida excesiva de información.
 
-""" Modelo """
+""" Modelo baseNet primera mejora. """
 def model_baseNet_mejora1(input_shape=(32,32,3)):
   model = Sequential()
-  model.add(Conv2D(6, kernel_size=(5, 5), padding='same', activation='relu', input_shape=input_shape))
+  model.add(Conv2D(8, kernel_size=(5, 5), activation='relu', input_shape=input_shape))
   model.add(MaxPooling2D(pool_size=(2, 2)))
   model.add(Dropout(0.25))
-  model.add(Conv2D(16, kernel_size=(3, 3), padding='same', activation='relu'))
-  model.add(Conv2D(6, kernel_size=(3, 3), activation='relu'))
-  model.add(Dropout(0.25))
+  model.add(Conv2D(16, kernel_size=(5, 5), padding='same', activation='relu'))
+  model.add(Conv2D(4, kernel_size=(3, 3), activation='relu'))
+  model.add(Dropout(0.3))
   model.add(Flatten())
-  model.add(Dense(50, activation='relu'))
+  model.add(Dense(75, activation='relu'))
   model.add(Dense(25, activation='softmax'))
+  return model
+
+def model_baseNet_mejora2(input_shape=(32,32,3)):
+  model = Sequential()
+  model.add(Conv2D(16, kernel_size=(5,5), activation='relu', input_shape=input_shape))
+  #model.add(BatchNormalization())
+  model.add(MaxPooling2D(pool_size=(4,4)))
+  model.add(Dropout(0.3))
+  model.add(Conv2D(8, kernel_size=(5,5), activation='relu'))
+  #model.add(BatchNormalization())
+  model.add(Conv2D(4, kernel_size=(3,3), activation='relu', padding = 'same'))
+  #model.add(BatchNormalization())
+  model.add(Flatten())
+  model.add(Dense(25, activation='relu'))
+  model.add(Dense(25, activation='softmax'))
+  model.summary()
   return model
 
 """ Ejercicio2 - RED MÁS PROFUNDA. """
 def ejercicio2_red():
+  print("RED MÁS PROFUNDA")
   input_shape=(32, 32, 3)     # Imágenes en color con 3 canales de 32x32 píxeles.
   num_classes = 25            # Número de clases es 25
-  batch_size = 64             # Tamaño de batch potencia de 2
+  batch_size = 32             # Tamaño de batch potencia de 2
   epochs = 20                 # Elegimos número de épocas
 
   x_train, y_train, x_test, y_test = cargarImagenes()
@@ -311,15 +364,16 @@ def ejercicio2_red():
   datagen_test.fit(x_train)
 
   model = model_baseNet_mejora1(input_shape)
+  #model = model_baseNet_mejora2(input_shape)
   model.summary()             # Descripción del modelo
   weights = optimizadorCompilador(model)
   model.set_weights(weights)  # Reestablecemos los pesos
 
-  histograma = train(model, x_train, y_train, datagen_train, batch_size, epochs, verbose=1)
-  print(histograma)
-  mostrarEvolucion(histograma)
-  predicciones = model.predict_generator(datagen_test.flow(x_test, batch_size = 1, shuffle = False), steps = len(x_test))
-  score = calcularAccuracy(y_test, predicciones)
+  hist = train(model, x_train, y_train, datagen_train, batch_size, epochs, verbose=1)
+  print(hist)
+  mostrarEvolucion(hist)
+  preds = model.predict_generator(datagen_test.flow(x_test, batch_size = 1, shuffle = False), steps = len(x_test))
+  score = calcularAccuracy(y_test, preds)
   print('Test accuracy:', score)
 
 ejercicio2_red()
@@ -329,12 +383,13 @@ ejercicio2_red()
 # normalización después de las capas conv (BatchNormalization). Agregue capas de normalización después de capas lineales
 # y experimente insertándolas antes o después de las capas ReLU.
 
-""" Modelo """
-def model_baseNet_mejora2(input_shape=(32,32,3)):
+""" Modelo baseNet primera mejora (BatchNormalization()). """
+def model_baseNet_batch(input_shape=(32,32,3)):
   model = Sequential()
   model.add(Conv2D(6, kernel_size=(5, 5), padding='same', activation='relu', input_shape=input_shape))
   model.add(MaxPooling2D(pool_size=(2, 2)))
   model.add(Dropout(0.25))
+  model.add(BatchNormalization())
   model.add(Conv2D(16, kernel_size=(3, 3), padding='same', activation='relu'))
   model.add(Conv2D(6, kernel_size=(3, 3), activation='relu'))
   model.add(BatchNormalization())
@@ -344,10 +399,11 @@ def model_baseNet_mejora2(input_shape=(32,32,3)):
   model.add(Dense(25, activation='softmax'))
   return model
 
-""" Ejercicio2 - RED MÁS PROFUNDA. """
+""" Ejercicio2 - CAPAS DE NORMALIZACIÓN. """
 def ejercicio2_capa_normalizacion():
+  print("CAPAS DE NORMALIZACIÓN")
   input_shape=(32, 32, 3)     # Imágenes en color con 3 canales de 32x32 píxeles.
-  num_classes = 25            # Número de clases es 25
+  num_classes = 32            # Número de clases es 25
   batch_size = 64             # Tamaño de batch potencia de 2
   epochs = 20                 # Elegimos número de épocas
 
@@ -357,32 +413,28 @@ def ejercicio2_capa_normalizacion():
   datagen_train.fit(x_train)
   datagen_test.fit(x_train)
 
-  model = model_baseNet_mejora2(input_shape)
+  model = model_baseNet_batch(input_shape)
   model.summary()             # Descripción del modelo
   weights = optimizadorCompilador(model)
   model.set_weights(weights)  # Reestablecemos los pesos
 
-  histograma = train(model, x_train, y_train, datagen_train, batch_size, epochs, verbose=1)
-  print(histograma)
-  mostrarEvolucion(histograma)
-  predicciones = model.predict_generator(datagen_test.flow(x_test, batch_size = 1, shuffle = False), steps = len(x_test))
-  score = calcularAccuracy(y_test, predicciones)
+  hist = train(model, x_train, y_train, datagen_train, batch_size, epochs, verbose=1)
+  print(hist)
+  mostrarEvolucion(hist)
+  preds = model.predict_generator(datagen_test.flow(x_test, batch_size = 1, shuffle = False), steps = len(x_test))
+  score = calcularAccuracy(y_test, preds)
   print('Test accuracy:', score)
 
 ejercicio2_capa_normalizacion()
 
-# "EARLY STOPPING". ¿Después de cuántas épocas parar y dejar de entrenar? Esta respuesta en stack-exhange es un buen
-# resumen del uso de divisiones train-val-test para reducir el sobreajuste. Este blog también es una buena referencia para
-# “early stopping”. Recuerde, nunca debe usar el conjunto de test en otra cosa que no sea la evaluación final. Mirando
-# las gráficas de pérdida de entrenamiento y precisión en validación, decida cuántas épocas entrenará su modelo. No
-# demasiados (ya que eso conduce a un sobreajuste) y no muy pocos (de lo contrario, su modelo no ha aprendido lo suficiente).
+# "EARLY STOPPING". ¿Después de cuántas épocas parar y dejar de entrenar?
 
-
-
+""" Ejercicio2 - EARLY STOPPING """
 def ejercicio2_early_stopping():
+  print("EARLY STOPPING")
   input_shape=(32, 32, 3)     # Imágenes en color con 3 canales de 32x32 píxeles.
   num_classes = 25            # Número de clases es 25
-  batch_size = 64             # Tamaño de batch potencia de 2
+  batch_size = 32             # Tamaño de batch potencia de 2
   epochs = 20                 # Elegimos número de épocas
 
   x_train, y_train, x_test, y_test = cargarImagenes()
@@ -391,25 +443,25 @@ def ejercicio2_early_stopping():
   datagen_train.fit(x_train)
   datagen_test.fit(x_train)
 
-  model = model_baseNet_mejora2(input_shape)
+  model = model_baseNet_batch(input_shape)
   model.summary()             # Descripción del modelo
   weights = optimizadorCompilador(model)
   model.set_weights(weights)  # Reestablecemos los pesos
 
   train_data = datagen_train.flow(x_train, y_train, batch_size=batch_size, subset='training')
   validation_data = datagen_train.flow(x_train, y_train, batch_size=batch_size, subset='validation')
-  es = EarlyStopping(monitor='val_loss',patience=4)
-  histograma = model.fit_generator(train_data,
-                steps_per_epoch = len(x_train)*0.9/batch_size,
-                epochs = epochs,
-                verbose = 1,
-                validation_data = validation_data,
-                validation_steps = len (x_train)*0.1/batch_size,
-                callbacks=[es])
-  print(histograma)
-  mostrarEvolucion(histograma)
-  predicciones = model.predict_generator(datagen_test.flow(x_test, batch_size = 1, shuffle = False), steps = len(x_test))
-  score = calcularAccuracy(y_test, predicciones)
+  es = EarlyStopping(monitor='val_loss', patience=5)
+  hist = model.fit_generator(train_data,
+            steps_per_epoch = len(x_train)*0.9/batch_size,
+            epochs = epochs,
+            verbose = 1,
+            validation_data = validation_data,
+            validation_steps = len (x_train)*0.1/batch_size,
+            callbacks=[es])
+  print(hist)
+  mostrarEvolucion(hist)
+  preds = model.predict_generator(datagen_test.flow(x_test, batch_size = 1, shuffle = False), steps = len(x_test))
+  score = calcularAccuracy(y_test, preds)
   print('Test accuracy:', score)
 
 ejercicio2_early_stopping()
