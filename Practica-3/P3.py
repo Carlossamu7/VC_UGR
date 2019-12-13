@@ -404,7 +404,7 @@ def convolution2D(image, kernel_x, kernel_y):
 
 def criterioHarris(eigenVal1, eigenVal2, threshold):
     fp = np.zeros(eigenVal1.shape)
-    print (eigenVal1.shape)
+
     for i in range(eigenVal1.shape[0]):
         for j in range (eigenVal1.shape[1]):
             if eigenVal1[i][j] == 0 and eigenVal2[i][j] == 0:
@@ -416,6 +416,9 @@ def criterioHarris(eigenVal1, eigenVal2, threshold):
     return fp
 
 def orientacion(u):
+    kx = cv2.getDerivKernels(0, 1, ksize)
+    ky = cv2.getDerivKernels(0, 1, ksize)
+
     u = u / sqrt(u[0]*u[0]+u[1]*u[1])
     if u[1] != 0:
         theta = math.atan(u[0]/u[1])
@@ -439,7 +442,7 @@ def get_keypoints(matrix, block_size, level):
     for i in range(matrix.shape[0]):
         for j in range(matrix.shape[1]):
             if matrix[i][j]>0:
-                kp.append( cv2.KeyPoint(i*(2**level), j*(2**level), block_size*(level+1), 1) )
+                kp.append( cv2.KeyPoint(j*(2**level), i*(2**level), block_size*(level+1), 1) )
 
     return kp;
 
@@ -464,48 +467,41 @@ def getHarris(img, block_size, ksize, threshold, level, winSize = 5):
     # Obtenemos los keypoints
     return get_keypoints(harris, block_size, level)
 
-""" Ejecución de ejemplos del ejercicio 1A.
-- image:
+""" Refina la posición de los keypoints sobre una imagen.
+- img:
 """
-def ejercicio_1A(img):
-    print("--- EJERCICIO 1A - PUNTOS HARRIS ---")
+def refineHarris(img):
+
+    return true
+
+""" Ejecución de ejemplos del ejercicio 1.
+- image: Imagen a estudiar y de la que sacar los puntos Harris.
+"""
+def ejercicio_1(img):
+    print("--- EJERCICIO 1 - PUNTOS HARRIS ---")
     levels = 4
+    num_kp = 0
     pyr = gaussian_pyramid(img, levels)
     keypoints = []
+    img_all_harris = np.copy(img)
 
     for l in range(levels):
         keypoints.append( getHarris(pyr[l], 3, 3, 0.01, l) )
+        # Contabilizamos el número de keypoints
+        print("{} keypoints en el nivel {}".format(len(keypoints[l]), l))
+        num_kp += len(keypoints[l])
         # Los ponemos en la imagen
-        img_harris = cv2.drawKeypoints(img, keypoints[l], np.array([]), color = (255,0,0), flags=4)
-        #img_harris = pinta_circulos(img, keypoints)
+        img_harris = cv2.drawKeypoints(img, keypoints[l], np.array([]), color = (250,0,0), flags=4)
+        img_all_harris = cv2.drawKeypoints(img_all_harris, keypoints[l], np.array([]), color = (255,0,0), flags=4)
         pintaI(img_harris, 0, "Puntos Harris", "Ejercicio 1A")
+    pintaI(img_all_harris, 0, "Puntos Harris de todos los niveles", "Ejercicio 1A")
+    print("El número de keypoints total es {}".format(num_kp))
 
+    #APARTADO D
+    #refineHarris(img)
+    #img_refinada = cv2.circle(img, center=(y, x), radius=0.1, color=(0,250,0), thickness=1)
+    #pintaI(img_refinada)
     input("Pulsa 'Enter' para continuar\n")
-
-""" Ejecución de ejemplos del ejercicio 1B.
-- image:
-"""
-def ejercicio_1B():
-    print("--- EJERCICIO 1B - TIT ---")
-
-    input("Pulsa 'Enter' para continuar\n")
-
-""" Ejecución de ejemplos del ejercicio 1C.
-- image:
-"""
-def ejercicio_1C():
-    print("--- EJERCICIO 1C - TIT ---")
-
-    input("Pulsa 'Enter' para continuar\n")
-
-""" Ejecución de ejemplos del ejercicio 1D.
-- image:
-"""
-def ejercicio_1D():
-    print("--- EJERCICIO 1D - TIT ---")
-
-    input("Pulsa 'Enter' para continuar\n")
-
 
 #######################
 ###   EJERCICIO 2   ###
@@ -529,7 +525,7 @@ def ejercicio_2():
 - image:
 """
 def ejercicio_3():
-    print("--- EJERCICIO 3 - TIT ---")
+    print("--- EJERCICIO 3 - AKAZE ---")
 
     input("Pulsa 'Enter' para continuar\n")
 
@@ -569,11 +565,8 @@ def main():
     gray1 = leer_imagen("imagenes/yosemite1.jpg",0)
     gray2 = leer_imagen("imagenes/yosemite2.jpg",0)
 
-    ejercicio_1A(gray1)
-    #ejercicio_1B()
-    #ejercicio_1C()
-    #ejercicio_1D()
-    #ejercicio_2()
+    ejercicio_1(gray1)
+    ejercicio_2()
     #ejercicio_3()
     #ejercicio_4()
     #bonus_1()
