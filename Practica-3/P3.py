@@ -9,6 +9,11 @@ import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 
+import sys
+import math
+import copy
+
+
 """ Uso la notación Snake Case la cual es habitual en Python """
 
 ########################################
@@ -32,7 +37,7 @@ def leer_imagen(file_name, flag_color = 1):
     if flag_color==1:
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-    img = img.astype(np.float64)
+    #img = img.astype(np.float32)
     return img
 
 """ Normaliza una matriz.
@@ -323,77 +328,22 @@ def laplacian_pyramid(image, levels = 4, border_type = cv2.BORDER_DEFAULT):
 """ Supresión de de no máximos.
 - image: imagen a tratar
 """
-def non_maximum_supression(image):
+def non_maximum_supression(image, winSize):
     res = np.zeros(image.shape)
 
     if len(image.shape) == 2:
         for i in range(image.shape[0]):
             for j in range(image.shape[1]):
                 max = 0
-                if i>=1 and j>=1:
-                    if max<image[i-1][j-1]:
-                        max = image[i-1][j-1]
-                if i>=1:
-                    if max<image[i-1][j]:
-                        max = image[i-1][j]
-                if i>=1 and j<(image.shape[1]-1):
-                    if max<image[i-1][j+1]:
-                        max = image[i-1][j+1]
-                if j>=1:
-                    if max<image[i][j-1]:
-                        max = image[i][j-1]
-                if j<(image.shape[1]-1):
-                    if max<image[i][j+1]:
-                        max = image[i][j+1]
-                if i<(image.shape[0]-1) and j>=1:
-                    if max<image[i+1][j-1]:
-                        max = image[i+1][j-1]
-                if i<(image.shape[0]-1):
-                    if max<image[i+1][j]:
-                        max = image[i+1][j]
-                if i<(image.shape[0]-1) and j<(image.shape[1]-1):
-                    if max<image[i+1][j+1]:
-                        max = image[i+1][j+1]
+                for k in range(-int(winSize/2), int(winSize/2)+1):
+                    if i+k>=0 and j+k>=0 and (i+k)<image.shape[0] and (j+k)<image.shape[1]:
+                        if max<image[i+k][j+k]:
+                            max = image[i+k][j+k]
 
-                if max<image[i][j]:
+                if max<=image[i][j]:
                     res[i][j] = image[i][j]
                 else:
                     res[i][j] = 0
-
-    elif len(image.shape) == 3:
-        for i in range(image.shape[0]):
-            for j in range(image.shape[1]):
-                for k in range(image.shape[2]):
-                    max = 0
-                    if i>=1 and j>=1:
-                        if max<image[i-1][j-1][k]:
-                            max = image[i-1][j-1][k]
-                    if i>=1:
-                        if max<image[i-1][j][k]:
-                            max = image[i-1][j][k]
-                    if i>=1 and j<(image.shape[1]-1):
-                        if max<image[i-1][j+1][k]:
-                            max = image[i-1][j+1][k]
-                    if j>=1:
-                        if max<image[i][j-1][k]:
-                            max = image[i][j-1][k]
-                    if j<(image.shape[1]-1):
-                        if max<image[i][j+1][k]:
-                            max = image[i][j+1][k]
-                    if i<(image.shape[0]-1) and j>=1:
-                        if max<image[i+1][j-1][k]:
-                            max = image[i+1][j-1][k]
-                    if i<(image.shape[0]-1):
-                        if max<image[i+1][j][k]:
-                            max = image[i+1][j][k]
-                    if i<(image.shape[0]-1) and j<(image.shape[1]-1):
-                        if max<image[i+1][j+1][k]:
-                            max = image[i+1][j+1][k]
-
-                    if max<image[i][j][k]:
-                        res[i][j][k] = image[i][j][k]
-                    else:
-                        res[i][j][k] = 0
 
     return res
 
@@ -452,13 +402,83 @@ def convolution2D(image, kernel_x, kernel_y):
 ###   EJERCICIO 1   ###
 #######################
 
+def criterioHarris(eigenVal1, eigenVal2, threshold):
+    fp = np.zeros(eigenVal1.shape)
+    print (eigenVal1.shape)
+    for i in range(eigenVal1.shape[0]):
+        for j in range (eigenVal1.shape[1]):
+            if eigenVal1[i][j] == 0 and eigenVal2[i][j] == 0:
+                fp[i][j] = 0
+            else:
+                fp[i][j] = eigenVal1[i][j] * eigenVal2[i][j] / (eigenVal1[i][j]+eigenVal2[i][j])
+                if fp[i][j] < threshold:
+                    fp[i][j] = 0
+    return fp
 
+def orientacion(u):
+    u = u / sqrt(u[0]*u[0]+u[1]*u[1])
+    if u[1] != 0:
+        theta = math.atan(u[0]/u[1])
+        if u[0]>0 and u[1]<0:
+            theta = math.pi - theta
+        elif u[0]<0 and u[1]<0:
+            theta = math.pi + theta
+        elif u[0]<0 and u[1]>0:
+            theta = 2*math.pi - theta
+    else:
+        if u[0]>0:
+            theta = math.pi/2
+        elif u[0]<0:
+            theta = 3/2 * math.pi
+
+    return theta * 180 / math.pi
+
+def get_keypoints(matrix, block_size, level):
+    kp = []
+
+    for i in range(matrix.shape[0]):
+        for j in range(matrix.shape[1]):
+            if matrix[i][j]>0:
+                kp.append( cv2.KeyPoint(i*(2**level), j*(2**level), block_size*(level+1), 1) )
+
+    return kp;
+
+def getHarris(img, block_size, ksize, threshold, level, winSize = 5):
+    # Se calculan los autovectoresy autovalores:
+    vals_vecs = cv2.cornerEigenValsAndVecs(img, block_size, ksize)
+
+    # En cada píxel tenemos (l1, l2, x1, y1, x2, y2)
+    vals_vecs = cv2.split(vals_vecs)
+    eigenVal1 = vals_vecs[0]
+    eigenVal2 = vals_vecs[1]
+    x1 = vals_vecs[2]
+    y1 = vals_vecs[3]
+    x2 = vals_vecs[4]
+    y2 = vals_vecs[5]
+    #(eigenVal1, eigenVal2, x1, y1, x2, y2) = vals_vecs
+
+    # Criterio de Harris para obtener la matriz con el valor asociado a cada pixel
+    harris = criterioHarris(eigenVal1, eigenVal2, threshold)
+    # Se suprimen los valores no máximos
+    harris = non_maximum_supression(harris, winSize)
+    # Obtenemos los keypoints
+    return get_keypoints(harris, block_size, level)
 
 """ Ejecución de ejemplos del ejercicio 1A.
 - image:
 """
-def ejercicio_1A():
-    print("--- EJERCICIO 1A - TIT ---")
+def ejercicio_1A(img):
+    print("--- EJERCICIO 1A - PUNTOS HARRIS ---")
+    levels = 4
+    pyr = gaussian_pyramid(img, levels)
+    keypoints = []
+
+    for l in range(levels):
+        keypoints.append( getHarris(pyr[l], 3, 3, 0.01, l) )
+        # Los ponemos en la imagen
+        img_harris = cv2.drawKeypoints(img, keypoints[l], np.array([]), color = (255,0,0), flags=4)
+        #img_harris = pinta_circulos(img, keypoints)
+        pintaI(img_harris, 0, "Puntos Harris", "Ejercicio 1A")
 
     input("Pulsa 'Enter' para continuar\n")
 
@@ -546,7 +566,10 @@ def bonus_1():
 #######################
 
 def main():
-    ejercicio_1A()
+    gray1 = leer_imagen("imagenes/yosemite1.jpg",0)
+    gray2 = leer_imagen("imagenes/yosemite2.jpg",0)
+
+    ejercicio_1A(gray1)
     #ejercicio_1B()
     #ejercicio_1C()
     #ejercicio_1D()
@@ -554,7 +577,6 @@ def main():
     #ejercicio_3()
     #ejercicio_4()
     #bonus_1()
-
 
 if __name__ == "__main__":
 	main()
