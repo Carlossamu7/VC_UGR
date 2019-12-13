@@ -8,6 +8,7 @@
 import cv2
 import numpy as np
 from matplotlib import pyplot as plt
+import random
 
 import sys
 import math
@@ -335,10 +336,11 @@ def non_maximum_supression(image, winSize):
         for i in range(image.shape[0]):
             for j in range(image.shape[1]):
                 max = 0
-                for k in range(-int(winSize/2), int(winSize/2)+1):
-                    if i+k>=0 and j+k>=0 and (i+k)<image.shape[0] and (j+k)<image.shape[1]:
-                        if max<image[i+k][j+k]:
-                            max = image[i+k][j+k]
+                for p in range(-int(winSize/2), int(winSize/2)+1):
+                    for q in range(-int(winSize/2), int(winSize/2)+1):
+                        if i+p>=0 and j+q>=0 and (i+p)<image.shape[0] and (j+q)<image.shape[1]:
+                            if max<image[i+p][j+q]:
+                                max = image[i+p][j+q]
 
                 if max<=image[i][j]:
                     res[i][j] = image[i][j]
@@ -486,7 +488,7 @@ def ejercicio_1(img):
     img_all_harris = np.copy(img)
 
     for l in range(levels):
-        keypoints.append( getHarris(pyr[l], 3, 3, 0.01, l) )
+        keypoints.append( getHarris(pyr[l], 3, 3, 0.001, l) )
         # Contabilizamos el número de keypoints
         print("{} keypoints en el nivel {}".format(len(keypoints[l]), l))
         num_kp += len(keypoints[l])
@@ -507,12 +509,37 @@ def ejercicio_1(img):
 ###   EJERCICIO 2   ###
 #######################
 
+"""
+Dadas dos imágenes calcula los keypoints y descriptores para obtener los matches
+usando "BruteForce+crossCheck". Devuelve la imagen compuesta.
+- n: número de matches a mostrar
+- flag: indica si se muestran los keypoints y los matches (0) o solo los matches (2).
+"""
+def getMatches_BF_CC(img1, img2, n = 30, flag = 2):
+    # Inicializamos el descriptor AKAZE
+    detector = cv2.AKAZE_create()
+    # Se obtienen los keypoints y los descriptores de las dos imágenes
+    keypoints1, descriptor1 = detector.detectAndCompute(img1, None)
+    keypoints2, descriptor2 = detector.detectAndCompute(img2, None)
+    # Se crea el objeto BFMatcher de OpenCV activando la validación cruzada
+    bf = cv2.BFMatcher(crossCheck = True)
+    # Se consiguen los puntos con los que hace match
+    matches1to2 = bf.match(descriptor1, descriptor2)
+    # Se ordenan los matches dependiendo de la distancia entre ambos
+    matches1to2 = sorted(matches1to2, key = lambda x:x.distance)[0:n]
+    # Se guardan n puntos aleatorios
+    matches1to2 = random.sample(matches1to2, n)
+    # Imagen con los matches
+    img_match = cv2.drawMatches(img1, keypoints1, img2, keypoints2, matches1to2, None, flags = flag)
+    return img_match
+
 """ Ejecución de ejemplos del ejercicio 2.
 - image:
 """
-def ejercicio_2():
+def ejercicio_2(img1, img2):
     print("--- EJERCICIO 2 - TIT ---")
-
+    match_BF_CC = getMatches_BF_CC(img1, img2)
+    pintaI(match_BF_CC)
     input("Pulsa 'Enter' para continuar\n")
 
 #######################
@@ -565,8 +592,8 @@ def main():
     gray1 = leer_imagen("imagenes/yosemite1.jpg",0)
     gray2 = leer_imagen("imagenes/yosemite2.jpg",0)
 
-    ejercicio_1(gray1)
-    ejercicio_2()
+    #ejercicio_1(gray1)
+    ejercicio_2(gray1, gray2)
     #ejercicio_3()
     #ejercicio_4()
     #bonus_1()
