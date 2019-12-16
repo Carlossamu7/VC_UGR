@@ -419,7 +419,7 @@ def criterioHarris(eigenVal1, eigenVal2, threshold):
 
 def orientacion(u):
     ksize = 3
-    kx = cv2.getDerivKernels(0, 1, ksize)
+    kx = cv2.getDerivKernels(1, 0, ksize)
     ky = cv2.getDerivKernels(0, 1, ksize)
 
     u = u / sqrt(u[0]*u[0]+u[1]*u[1])
@@ -522,6 +522,7 @@ def getMatches_BF_CC(img1, img2, n = 100, flag = 2):
     # Se obtienen los keypoints y los descriptores de las dos imágenes
     keypoints1, descriptor1 = detector.detectAndCompute(img1, None)
     keypoints2, descriptor2 = detector.detectAndCompute(img2, None)
+
     # Se crea el objeto BFMatcher activando la validación cruzada
     bf = cv2.BFMatcher(crossCheck = True)
     # Se consiguen los puntos con los que hace match
@@ -530,6 +531,7 @@ def getMatches_BF_CC(img1, img2, n = 100, flag = 2):
     matches1to2 = sorted(matches1to2, key = lambda x:x.distance)[0:n]
     # Se guardan n puntos aleatorios
     #matches1to2 = random.sample(matches1to2, n)
+
     # Imagen con los matches
     img_match = cv2.drawMatches(img1, keypoints1, img2, keypoints2, matches1to2, None, flags = flag)
     return img_match
@@ -551,37 +553,36 @@ def getMatches_LA_2NN(img1, img2, ratio = 0.8, n = 1, flag = 2):
     # Se crea el objeto BFMatcher
     bf = cv2.BFMatcher()
     # Escogemos los puntos con los que hace match indicando los vecinos más cercanos para la comprobación (2)
-    matches = bf.knnMatch(descriptor1, descriptor2, 2)
+    matches1to2 = bf.knnMatch(descriptor1, descriptor2, 2)
 
     # Se mostrará el número máximo de matches
-    n = int(len(matches)*n)
-
+    n = int(len(matches1to2)*n)
     # Mejora de los matches -> los puntos que cumplan con un radio en concreto
-    good = []
-
+    best1to2 = []
     # Se recorren todos los matches
-    for p1, p2 in matches:
+    for p1, p2 in matches1to2:
         if p1.distance < ratio*p2.distance:
-            good.append([p1])
+            best1to2.append([p1])
 
     # Se ordenan los matches dependiendo de la distancia entre ambos
-    matches1to2 = sorted(good, key = lambda x:x.distance)[0:n]
+    matches1to2 = sorted(best1to2, key = lambda x:x.distance)[0:n]
     # Se guardan n puntos aleatorios
     #matches1to2 = random.sample(good, n)
 
     # Imagen con los matches
-    img_match = cv2.drawMatchesKnn(img1, keypoints1, img2, keypoints2, matches, None, flags = flag)
+    img_match = cv2.drawMatchesKnn(img1, keypoints1, img2, keypoints2, matches1to2, None, flags = flag)
     return img_match
 
 """ Ejecución de ejemplos del ejercicio 2.
 - image:
 """
 def ejercicio_2(img1, img2):
-    print("--- EJERCICIO 2 - TIT ---")
+    print("--- EJERCICIO 2 - DESCRIPTORES AKAZE CON BFMatcher Y CRITERIOS BruteForce+crossCheck y Lowe-Average-2NN ---")
     match_BF_CC = getMatches_BF_CC(img1, img2)
     pintaI(match_BF_CC)
     match_LA_2NN = getMatches_LA_2NN(img1, img2)
     input("Pulsa 'Enter' para continuar\n")
+
 
 #######################
 ###   EJERCICIO 3   ###
@@ -633,7 +634,7 @@ def main():
     gray1 = leer_imagen("imagenes/yosemite1.jpg",0)
     gray2 = leer_imagen("imagenes/yosemite2.jpg",0)
 
-    #ejercicio_1(gray1)
+    ejercicio_1(gray1)
     ejercicio_2(gray1, gray2)
     #ejercicio_3()
     #ejercicio_4()
