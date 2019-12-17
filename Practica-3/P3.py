@@ -417,35 +417,51 @@ def criterioHarris(eigenVal1, eigenVal2, threshold):
                     fp[i][j] = 0
     return fp
 
-def orientacion(u):
-    ksize = 3
-    kx = cv2.getDerivKernels(1, 0, ksize)
-    ky = cv2.getDerivKernels(0, 1, ksize)
+def orientacion(u1, u2):
+    if(u1==0 and u2==0):
+        return 0;
 
-    u = u / sqrt(u[0]*u[0]+u[1]*u[1])
-    if u[1] != 0:
-        theta = math.atan(u[0]/u[1])
-        if u[0]>0 and u[1]<0:
+    # Normalizamos el vector
+    l2_norm = math.sqrt(u1*u1+u2*u2)
+    u1 = u1 / l2_norm
+    u2 = u2 / l2_norm
+
+    # Arcotangente sabiendo que (u1, u2) = (cos(theta), sen(theta))
+    if u1 != 0:
+        print("ENTRO\n")
+        theta = math.atan(u2/u1)
+        if u1<0 and u2>0:
             theta = math.pi - theta
-        elif u[0]<0 and u[1]<0:
+        elif u1<0 and u2<0:
             theta = math.pi + theta
-        elif u[0]<0 and u[1]>0:
-            theta = 2*math.pi - theta
     else:
-        if u[0]>0:
+        if u2>0:
             theta = math.pi/2
-        elif u[0]<0:
+        elif u2<0:
             theta = 3/2 * math.pi
 
+    # Devolvemos en grados
     return theta * 180 / math.pi
 
 def get_keypoints(matrix, block_size, level):
     kp = []
+    ksize = 3
+
+    mcopy = np.copy(matrix)
+    mcopy = gaussian_blur(mcopy, 4.5)
+    kx, ky = cv2.getDerivKernels(1, 0, ksize)
+    dx = convolution(matrix, kx, ky)
+
+    mcopy = np.copy(matrix)
+    mcopy = gaussian_blur(mcopy, 4.5)
+    kx, ky = cv2.getDerivKernels(0, 1, ksize)
+    dy = convolution(mcopy, kx, ky)
 
     for i in range(matrix.shape[0]):
         for j in range(matrix.shape[1]):
             if matrix[i][j]>0:
-                kp.append( cv2.KeyPoint(j*(2**level), i*(2**level), block_size*(level+1), 1) )
+                kp.append( cv2.KeyPoint( j*(2**level), i*(2**level),
+                    _size = block_size*(level+1), _angle = orientacion(dx[i][j], dy[i][j]) ) )
 
     return kp;
 
@@ -457,11 +473,8 @@ def getHarris(img, block_size, ksize, threshold, level, winSize = 5):
     vals_vecs = cv2.split(vals_vecs)
     eigenVal1 = vals_vecs[0]
     eigenVal2 = vals_vecs[1]
-    x1 = vals_vecs[2]
-    y1 = vals_vecs[3]
-    x2 = vals_vecs[4]
-    y2 = vals_vecs[5]
-    #(eigenVal1, eigenVal2, x1, y1, x2, y2) = vals_vecs
+    #x1 = vals_vecs[2], y1 = vals_vecs[3]
+    #x2 = vals_vecs[4], y2 = vals_vecs[5]
 
     # Criterio de Harris para obtener la matriz con el valor asociado a cada pixel
     harris = criterioHarris(eigenVal1, eigenVal2, threshold)
@@ -475,7 +488,7 @@ def getHarris(img, block_size, ksize, threshold, level, winSize = 5):
 """
 def refineHarris(img):
 
-    return true
+    return 0
 
 """ Ejecución de ejemplos del ejercicio 1.
 - image: Imagen a estudiar y de la que sacar los puntos Harris.
@@ -501,9 +514,13 @@ def ejercicio_1(img):
     print("El número de keypoints total es {}".format(num_kp))
 
     #APARTADO D
-    #refineHarris(img)
-    #img_refinada = cv2.circle(img, center=(y, x), radius=0.1, color=(0,250,0), thickness=1)
-    #pintaI(img_refinada)
+    print("Apartado d -> refinación")
+    keypoints_refined = []
+    for l in range(levels):
+        #keypoints.append( getHarris(pyr[l], 3, 3, 0.001, l) )
+        keypoints_refined.append(refineHarris(pyr[l]))
+        #img_refinada = cv2.circle(img, center=(y, x), radius=0.1, color=(0,250,0), thickness=1)
+        #pintaI(img_refinada)
     input("Pulsa 'Enter' para continuar\n")
 
 #######################
@@ -528,9 +545,9 @@ def getMatches_BF_CC(img1, img2, n = 100, flag = 2):
     # Se consiguen los puntos con los que hace match
     matches1to2 = bf.match(descriptor1, descriptor2)
     # Se ordenan los matches dependiendo de la distancia entre ambos
-    matches1to2 = sorted(matches1to2, key = lambda x:x.distance)[0:n]
+    #matches1to2 = sorted(matches1to2, key = lambda x:x.distance)[0:n]
     # Se guardan n puntos aleatorios
-    #matches1to2 = random.sample(matches1to2, n)
+    matches1to2 = random.sample(matches1to2, n)
 
     # Imagen con los matches
     img_match = cv2.drawMatches(img1, keypoints1, img2, keypoints2, matches1to2, None, flags = flag)
@@ -543,7 +560,7 @@ Si se indica el flag "improve" como True, elegirá los mejores matches.
 - n: número de matches a mostrar
 - flag: indica si se muestran los keypoints y los matches (0) o solo los matches (2).
 """
-def getMatches_LA_2NN(img1, img2, ratio = 0.8, n = 1, flag = 2):
+def getMatches_LA_2NN(img1, img2, ratio = 0.8, n = 100, flag = 2):
     # Inicializamos el descriptor AKAZE
     detector = cv2.AKAZE_create()
     # Se obtienen los keypoints y los descriptores de las dos imágenes
@@ -555,19 +572,17 @@ def getMatches_LA_2NN(img1, img2, ratio = 0.8, n = 1, flag = 2):
     # Escogemos los puntos con los que hace match indicando los vecinos más cercanos para la comprobación (2)
     matches1to2 = bf.knnMatch(descriptor1, descriptor2, 2)
 
-    # Se mostrará el número máximo de matches
-    n = int(len(matches1to2)*n)
     # Mejora de los matches -> los puntos que cumplan con un radio en concreto
     best1to2 = []
     # Se recorren todos los matches
     for p1, p2 in matches1to2:
-        if p1.distance < ratio*p2.distance:
+        if p1.distance < ratio * p2.distance:
             best1to2.append([p1])
 
     # Se ordenan los matches dependiendo de la distancia entre ambos
-    matches1to2 = sorted(best1to2, key = lambda x:x.distance)[0:n]
+    #matches1to2 = sorted(best1to2, key = lambda x:x[0].distance)[0:n]
     # Se guardan n puntos aleatorios
-    #matches1to2 = random.sample(good, n)
+    matches1to2 = random.sample(best1to2, n)
 
     # Imagen con los matches
     img_match = cv2.drawMatchesKnn(img1, keypoints1, img2, keypoints2, matches1to2, None, flags = flag)
@@ -581,6 +596,7 @@ def ejercicio_2(img1, img2):
     match_BF_CC = getMatches_BF_CC(img1, img2)
     pintaI(match_BF_CC)
     match_LA_2NN = getMatches_LA_2NN(img1, img2)
+    pintaI(match_LA_2NN)
     input("Pulsa 'Enter' para continuar\n")
 
 
@@ -594,7 +610,7 @@ def ejercicio_2(img1, img2):
 - image:
 """
 def ejercicio_3():
-    print("--- EJERCICIO 3 - AKAZE ---")
+    print("--- EJERCICIO 3 - TIT ---")
 
     input("Pulsa 'Enter' para continuar\n")
 
@@ -634,7 +650,7 @@ def main():
     gray1 = leer_imagen("imagenes/yosemite1.jpg",0)
     gray2 = leer_imagen("imagenes/yosemite2.jpg",0)
 
-    ejercicio_1(gray1)
+    #ejercicio_1(gray1)
     ejercicio_2(gray1, gray2)
     #ejercicio_3()
     #ejercicio_4()
