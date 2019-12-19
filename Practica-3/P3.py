@@ -38,7 +38,7 @@ def leer_imagen(file_name, flag_color = 1):
     if flag_color==1:
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-    #img = img.astype(np.float32)
+    img = img.astype(np.float32)
     return img
 
 """ Normaliza una matriz.
@@ -416,7 +416,7 @@ def criterioHarris(eigenVal1, eigenVal2, threshold):
                 if fp[i][j] < threshold:
                     fp[i][j] = 0
     return fp
-
+'''
 def orientacion(u1, u2):
     if(u1==0 and u2==0):
         return 0;
@@ -428,8 +428,7 @@ def orientacion(u1, u2):
 
     # Arcotangente sabiendo que (u1, u2) = (cos(theta), sen(theta))
     if u1 != 0:
-        print("ENTRO\n")
-        theta = math.atan(u2/u1)
+        theta = math.atan2(u2,u1)
         if u1<0 and u2>0:
             theta = math.pi - theta
         elif u1<0 and u2<0:
@@ -439,9 +438,26 @@ def orientacion(u1, u2):
             theta = math.pi/2
         elif u2<0:
             theta = 3/2 * math.pi
-
+    print(theta * 180 / math.pi)
     # Devolvemos en grados
     return theta * 180 / math.pi
+'''
+
+def orientacion(u1, u2):
+    if(u1==0 and u2==0):
+        return 1
+
+    # Normalizamos el vector
+    l2_norm = math.sqrt(u1*u1+u2*u2)
+    u1 = u1 / l2_norm
+    u2 = u2 / l2_norm
+
+    theta = math.atan2(u2,u1) * 180 / math.pi
+    if theta<0:
+        theta += 360
+
+    # Devolvemos en grados
+    return theta
 
 def get_keypoints(matrix, block_size, level):
     kp = []
@@ -450,12 +466,16 @@ def get_keypoints(matrix, block_size, level):
     mcopy = np.copy(matrix)
     mcopy = gaussian_blur(mcopy, 4.5)
     kx, ky = cv2.getDerivKernels(1, 0, ksize)
-    dx = convolution(matrix, kx, ky)
+    dx = convolution(mcopy, kx, ky)
+    dx = dx.astype(np.float32)
+    #pintaI(dx,0)
 
     mcopy = np.copy(matrix)
     mcopy = gaussian_blur(mcopy, 4.5)
     kx, ky = cv2.getDerivKernels(0, 1, ksize)
     dy = convolution(mcopy, kx, ky)
+    dy = dy.astype(np.float32)
+    #pintaI(dy,0)
 
     for i in range(matrix.shape[0]):
         for j in range(matrix.shape[1]):
@@ -497,18 +517,21 @@ def ejercicio_1(img):
     print("--- EJERCICIO 1 - PUNTOS HARRIS ---")
     levels = 4
     num_kp = 0
-    pyr = gaussian_pyramid(img, levels)
+    copy = np.copy(img)
+    pyr = gaussian_pyramid(copy, levels)
     keypoints = []
-    img_all_harris = np.copy(img)
+    img_all_harris = np.copy(copy)
 
     for l in range(levels):
-        keypoints.append( getHarris(pyr[l], 3, 3, 0.001, l) )
+        keypoints.append( getHarris(pyr[l], 3, 3, 10, l) )
         # Contabilizamos el número de keypoints
         print("{} keypoints en el nivel {}".format(len(keypoints[l]), l))
         num_kp += len(keypoints[l])
         # Los ponemos en la imagen
-        img_harris = cv2.drawKeypoints(img, keypoints[l], np.array([]), color = (250,0,0), flags=4)
-        img_all_harris = cv2.drawKeypoints(img_all_harris, keypoints[l], np.array([]), color = (255,0,0), flags=4)
+        copy = copy.astype(np.uint8)
+        img_all_harris = img_all_harris.astype(np.uint8)
+        img_harris = cv2.drawKeypoints(copy, keypoints[l], np.array([]), color = (250,0,0), flags=4)
+        img_all_harris = cv2.drawKeypoints(img_all_harris, keypoints[l], np.array([]), color = (250,0,0), flags=4)
         pintaI(img_harris, 0, "Puntos Harris", "Ejercicio 1A")
     pintaI(img_all_harris, 0, "Puntos Harris de todos los niveles", "Ejercicio 1A")
     print("El número de keypoints total es {}".format(num_kp))
@@ -625,7 +648,16 @@ def ejercicio_3():
 """
 def ejercicio_4():
     print("--- EJERCICIO 4 - TIT ---")
-
+    mosaico = [leer_imagen("imagenes/mosaico002.jpg", 0),
+               leer_imagen("imagenes/mosaico003.jpg", 0),
+               leer_imagen("imagenes/mosaico004.jpg", 0),
+               leer_imagen("imagenes/mosaico005.jpg", 0),
+               leer_imagen("imagenes/mosaico006.jpg", 0),
+               leer_imagen("imagenes/mosaico007.jpg", 0),
+               leer_imagen("imagenes/mosaico008.jpg", 0),
+               leer_imagen("imagenes/mosaico009.jpg", 0),
+               leer_imagen("imagenes/mosaico010.jpg", 0),
+               leer_imagen("imagenes/mosaico011.jpg", 0)]
     input("Pulsa 'Enter' para continuar\n")
 
 #######################
@@ -647,10 +679,10 @@ def bonus_1():
 #######################
 
 def main():
-    gray1 = leer_imagen("imagenes/yosemite1.jpg",0)
-    gray2 = leer_imagen("imagenes/yosemite2.jpg",0)
+    gray1 = leer_imagen("imagenes/yosemite1.jpg", 0)
+    gray2 = leer_imagen("imagenes/yosemite2.jpg", 0)
 
-    #ejercicio_1(gray1)
+    ejercicio_1(gray1)
     ejercicio_2(gray1, gray2)
     #ejercicio_3()
     #ejercicio_4()
