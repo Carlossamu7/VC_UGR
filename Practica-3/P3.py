@@ -90,68 +90,6 @@ def pintaI(image, flag_color=1, image_title = "Imagen", window_title = "Ejercici
     #cv2.waitKey(0)
     #cv2.destroyAllWindows()
 
-""" Lee una lista de imágenes ya sea en grises o en color. Devuelve la lista de imágenes leída.
-- image_list: lista de imágenes a concatenar.
-- flag_color (op): modo en el que se van a leer las imágenes. Por defecto en color.
-"""
-def leer_lista_imagenes(file_name_list, flag_color = 1):
-    image_list = []
-
-    for i in file_name_list:
-        img = leer_imagen(i, flag_color)
-        image_list.append(img)
-
-    return image_list
-
-""" Muestra múltiples imágenes en una ventena Matplotlib.
-- image_list: La lista de imágenes.
-- image_title_list: Lista de títulos de las imágenes.
-- rows: filas.
-- columns: columnas.
-- flag_color (op): bandera para indicar si la imagen es en B/N o color. Por defecto color.
-- window_title (op): título de la ventana. Por defecto 'Imágenes con títulos'
-"""
-def imprimir_imagenes_titulos(image_list, image_title_list, rows, columns, flag_color = 1, window_title = 'Imágenes con títulos'):
-    # Se igualan los tamaños de las Imagenes
-    fig = plt.figure(0)
-    fig.canvas.set_window_title(window_title)
-
-    for i in range(len(image_list)):
-        normaliza(image_list[i], image_title_list[i])
-        image_list[i] = image_list[i].astype(np.uint8)
-
-    for i in range(rows * columns):
-        if i < len(image_list):
-            plt.subplot(rows, columns, i+1) # El índice (3er parametro) comienza en 1 en la esquina superior izquierda y aumenta a la derecha.
-            if flag_color == 0:
-                plt.imshow(image_list[i], cmap = "gray")
-            else:
-                plt.imshow(image_list[i])
-            plt.title(image_title_list[i])
-            plt.xticks([])  # Se le pasa una lista de posiciones en las que se deben colocar los
-            plt.yticks([])  # ticks, si pasamos una lista vacía deshabilitamos los xticks e yticks
-    plt.show()
-
-    for i in range(len(image_list)):
-        image_list[i] = image_list[i].astype(np.float64)    # lo devolvemos a su formato.
-
-""" Visualiza varias imágenes a la vez.
-- image_list: Secuencia de imágenes.
-- flag_color (op): bandera para indicar si la imagen es en B/N o color. Por defecto color.
-- image_title (op): título de la imagen. Por defecto 'Imágenes'
-- window_title (op): título de la ventana. Por defecto 'Ejercicio pirámide'
-"""
-def muestraMI(image_list, flag_color = 1, image_title = "Imágenes", window_title = "Ejercicio pirámide"):
-  altura = max(im.shape[0] for im in image_list)
-
-  for i,im in enumerate(image_list):
-    if im.shape[0] < altura: # Redimensionar imágenes
-      borde = int((altura - image_list[i].shape[0])/2)
-      image_list[i] = cv2.copyMakeBorder(image_list[i], borde, borde + (altura - image_list[i].shape[0]) % 2, 0, 0, cv2.BORDER_CONSTANT, value = (0,0,0))
-
-  im_concat = cv2.hconcat(image_list)
-  pintaI(im_concat, flag_color, image_title, "Ejercicio pirámide")
-
 """ Aplica una máscara Gaussiana 2D. Devuelve la imagen con las máscara aplicada.
 - image: la imagen a tratar.
 - kernel_x: kernel en las dirección X.
@@ -201,102 +139,6 @@ def subsampling(image):
 
     return cp
 
-""" Hace un upsampling de la imagen pasada como argumento. Devuelve la imagen agrandada.
-- image: imagen a agrandar.
-- n_fil: número de filas de la matriz resultante.
-- n_col: número de columnas de la matriz resultante.
-"""
-
-def upsampling(image, n_fil, n_col):
-    fil = False
-    col = False
-
-    if n_fil % 2 == 1:
-        n_fil = n_fil-1
-        fil = True
-
-    if n_col % 2 == 1:
-        n_col = n_col-1
-        col = True
-
-    if len(image.shape)==2:
-        if fil and col:
-            salida = np.zeros((n_fil+1, n_col+1))
-        elif fil:
-            salida = np.zeros((n_fil+1, n_col))
-        elif col:
-            salida = np.zeros((n_fil, n_col+1))
-        else:
-            salida = np.zeros((n_fil, n_col))
-
-        # Relleno la matriz, en cada iteración escribo 4 elementos de la matriz de salida
-        for i in range(0, n_fil, 2):
-            for j in range(0, n_col, 2):
-                salida[i][j] = image[int(i/2)][int(j/2)]
-                salida[i+1][j] = image[int(i/2)][int(j/2)]
-                salida[i][j+1] = image[int(i/2)][int(j/2)]
-                salida[i+1][j+1] = image[int(i/2)][int(j/2)]
-
-        # Si el número de filas era impar escribo la última fila la cual borré con n_fil = n_fil-1
-        if fil:
-            for j in range(0, n_col, 2):
-                salida[n_fil][j] = image[image.shape[0]-1][int(j/2)]
-                salida[n_fil][j+1] = image[image.shape[0]-1][int(j/2)]
-
-        # Si el número de columnas era impar escribo la última columna la cual borré con n_col = n_col-1
-        if col:
-            for i in range(0, n_fil, 2):
-                salida[i][n_col] = image[int(i/2)][image.shape[1]-1]
-                salida[i+1][n_col] = image[int(i/2)][image.shape[1]-1]
-
-            # Si se da el caso de que n_fil y n_col eran impares falta el último elemento por escribir en cada banda
-            if fil and col:
-                salida[n_fil][n_col] = image[image.shape[0]-1][image.shape[1]-1]
-
-    if len(image.shape)==3:
-        if fil and col:
-            salida = np.zeros((n_fil+1, n_col+1, image.shape[2]))
-        elif fil:
-            salida = np.zeros((n_fil+1, n_col, image.shape[2]))
-        elif col:
-            salida = np.zeros((n_fil, n_col+1, image.shape[2]))
-        else:
-            salida = np.zeros((n_fil, n_col, image.shape[2]))
-
-        # Escribo en todos los canales
-        for k in range(0, image.shape[2]):
-            # Relleno la matriz, en cada iteración escribo 4 elementos de la matriz de salida
-            for i in range(0, n_fil, 2):
-                for j in range(0, n_col, 2):
-                    salida[i][j][k] = image[int(i/2)][int(j/2)][k]
-                    salida[i+1][j][k] = image[int(i/2)][int(j/2)][k]
-                    salida[i][j+1][k] = image[int(i/2)][int(j/2)][k]
-                    salida[i+1][j+1][k] = image[int(i/2)][int(j/2)][k]
-
-            # Si el número de filas era impar escribo la última fila la cual borré con n_fil = n_fil-1
-            if fil:
-                for k in range(0, image.shape[2]):
-                    #salida[n_fil,:,k][::2] = image[image.shape[0]-1,:,k]
-                    #salida[n_fil,:,k][1::2] = image[image.shape[0]-1,:,k]
-                    for j in range(0, n_col, 2):
-                        salida[n_fil][j][k] = image[image.shape[0]-1][int(j/2)][k]
-                        salida[n_fil][j+1][k] = image[image.shape[0]-1][int(j/2)][k]
-
-            # Si el número de columnas era impar escribo la última columna la cual borré con n_col = n_col-1
-            if col:
-                for k in range(0, image.shape[2]):
-                    #salida[:,n_col,k][::2] = image[:,image.shape[1]-1,k]
-                    #salida[:,n_col,k][1::2] = image[:,image.shape[1]-1,k]
-                    for i in range(0, n_fil, 2):
-                        salida[i][n_col,k] = image[int(i/2)][image.shape[1]-1][k]
-                        salida[i+1][n_col][k] = image[int(i/2)][image.shape[1]-1][k]
-
-                    # Si se da el caso de que n_fil y n_col eran impares falta el último elemento por escribir en cada banda
-                    if fil and col:
-                        salida[n_fil][n_col][k] = image[image.shape[0]-1][image.shape[1]-1][k]
-
-    return salida
-
 """ Genera representación de pirámide gaussiana. Devuelve la lista de imágenes que forman la pirámide gaussiana.
 - image: La imagen a la que generar la pirámide gaussiana.
 - levels (op): Número de niveles de la pirámide gaussiana. Por defecto 4.
@@ -310,21 +152,6 @@ def gaussian_pyramid(image, levels = 4, border_type = cv2.BORDER_DEFAULT):
         blur = subsampling(blur)
         pyramid.append(blur)
     return pyramid
-
-""" Genera representación de pirámide laplaciana. Devuelve la lista de imágenes que forman la pirámide laplaciana.
-- image: La imagen a la que generar la pirámide laplaciana.
-- levels (op): Número de niveles de la pirámide laplaciana. Por defecto 4.
-- border_type (op): Tipo de borde a utilizar. BORDER DEFAULT.
-"""
-def laplacian_pyramid(image, levels = 4, border_type = cv2.BORDER_DEFAULT):
-    gau_pyr = gaussian_pyramid(image, levels+1, border_type)
-    lap_pyr = []
-    for n in range(levels):
-        gau_n_1 = upsampling(gau_pyr[n+1], gau_pyr[n].shape[0], gau_pyr[n].shape[1])
-        #gau_n_1 = 4*gaussian_blur(gau_n_1, 1, 1, 7, 7)   # Otra opción para la laplaciana: poniendo 0s.
-        gau_n_1 = gaussian_blur(gau_n_1, 1, 1, 7, 7, border_type = border_type)
-        lap_pyr.append(normaliza(gau_pyr[n] - gau_n_1, "Etapa {} de la pirámide gaussiana.".format(n)))
-    return lap_pyr
 
 """ Supresión de de no máximos.
 - image: imagen a tratar
@@ -348,57 +175,6 @@ def non_maximum_supression(image, winSize):
                     res[i][j] = 0
 
     return res
-
-""" Función que realiza la correlación de la máscara 'kernel' sobre la imagen 'image'. Devuelve la imagen correlada.
-- image: imagen a tratar.
-- kernel: kernel a pasar por la imagen.
-"""
-def correlation1D(image, kernel):
-    mitad = int(len(kernel)/2)
-    salida = np.zeros(image.shape)
-
-    if len(image.shape) == 2:
-        im = np.zeros((image.shape[0], image.shape[1] + 2*mitad))
-        im[:, mitad:im.shape[1]-mitad] = image
-
-        for i in range(0, image.shape[0]):
-            for j in range(0, image.shape[1]):
-                for n in range(-mitad, mitad+1):
-                    salida[i][j] += im[i][j+mitad+n] * kernel[n+mitad]
-
-    elif len(image.shape) == 3:
-        im = np.zeros((image.shape[0], image.shape[1] + 2*mitad, image.shape[2]))
-        for i in range(0, image.shape[0]):
-            for j in range(0, image.shape[1]):
-                for k in range(0, image.shape[2]):
-                    im[i][j+mitad][k] = image[i][j][k]
-
-        for i in range(0, image.shape[0]):
-            for j in range(0, image.shape[1]):
-                for k in range(0, image.shape[2]):
-                    for n in range(-mitad, mitad+1):
-                        salida[i][j][k] += im[i][j+mitad+n][k] * kernel[n+mitad]
-
-    return salida
-
-
-""" Función que realiza una convolución 2D con máscaras separables. Devuelve la imagen convolucionada.
-- image: imagen a tratar.
-- kernel_x: kernel en las dirección X.
-- kernel_y: kernel en las dirección Y.
-"""
-def convolution2D(image, kernel_x, kernel_y):
-    salida = np.copy(image)
-    kernel_x = cv2.flip(kernel_x, -1)
-    kernel_y = cv2.flip(kernel_y, -1)
-
-    salida = correlation1D(salida, kernel_x)
-    salida = np.transpose(salida)
-    salida = correlation1D(salida, kernel_y)
-    salida = np.transpose(salida)
-    salida = normaliza(salida, "Convolución 2D")
-
-    return salida
 
 #######################
 ###   EJERCICIO 1   ###
@@ -805,10 +581,10 @@ def main():
     print("")
 
     # Ejecutamos los ejercicios
-    #ejercicio_1(gray1)
-    #ejercicio_2(gray1, gray2, "Yosemite")
+    ejercicio_1(gray1)
+    ejercicio_2(gray1, gray2, "Yosemite")
     ejercicio_3(yos1, yos2, "Yosemite")
-    ejercicio_3(et1, et2, "ETSIIT")
+    #ejercicio_3(et1, et2, "ETSIIT")
     #ejercicio_4(lista_etsiit, "ETSIIT")
     ejercicio_4(lista_yos1, "Yosemite 1")
     #ejercicio_4(lista_yos2, "Yosemite 2")
