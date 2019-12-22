@@ -404,6 +404,11 @@ def convolution2D(image, kernel_x, kernel_y):
 ###   EJERCICIO 1   ###
 #######################
 
+""" Calcula la función f_p = lambda1*lambda2 / (lambda1+lambda2) y comprueba umbral.
+- eigenVal1: Matriz de valores propios.
+- eigenVal2: Matriz de valores propios.
+- threshold: umbral, si no se supera f_p en ese píxel es 0.
+"""
 def criterioHarris(eigenVal1, eigenVal2, threshold):
     fp = np.zeros(eigenVal1.shape)
 
@@ -416,8 +421,13 @@ def criterioHarris(eigenVal1, eigenVal2, threshold):
                 if fp[i][j] < threshold:
                     fp[i][j] = 0
     return fp
-'''
+
+""" Orientación de un vector (u1, u2)
+- u1: primera componente del autovector.
+- u2: segunda componente del autovector.
+"""
 def orientacion(u1, u2):
+    # Comprobamos que no es el vector nulo
     if(u1==0 and u2==0):
         return 0;
 
@@ -426,32 +436,7 @@ def orientacion(u1, u2):
     u1 = u1 / l2_norm
     u2 = u2 / l2_norm
 
-    # Arcotangente sabiendo que (u1, u2) = (cos(theta), sen(theta))
-    if u1 != 0:
-        theta = math.atan2(u2,u1)
-        if u1<0 and u2>0:
-            theta = math.pi - theta
-        elif u1<0 and u2<0:
-            theta = math.pi + theta
-    else:
-        if u2>0:
-            theta = math.pi/2
-        elif u2<0:
-            theta = 3/2 * math.pi
-    print(theta * 180 / math.pi)
-    # Devolvemos en grados
-    return theta * 180 / math.pi
-'''
-
-def orientacion(u1, u2):
-    if(u1==0 and u2==0):
-        return 1
-
-    # Normalizamos el vector
-    l2_norm = math.sqrt(u1*u1+u2*u2)
-    u1 = u1 / l2_norm
-    u2 = u2 / l2_norm
-
+    # Calulamos el ángulo en grados
     theta = math.atan2(u2,u1) * 180 / math.pi
     if theta<0:
         theta += 360
@@ -459,6 +444,11 @@ def orientacion(u1, u2):
     # Devolvemos en grados
     return theta
 
+""" Calcula los keypoints dada una matriz después de supresión de no máximos.
+- matrix: matriz a tratar.
+- blok_size: tamaño del bloque que se usó en cornerEigenValsAndVecs().
+- level: nivel de la pirámide.
+"""
 def get_keypoints(matrix, block_size, level):
     kp = []
     ksize = 3
@@ -468,14 +458,12 @@ def get_keypoints(matrix, block_size, level):
     kx, ky = cv2.getDerivKernels(1, 0, ksize)
     dx = convolution(mcopy, kx, ky)
     dx = dx.astype(np.float32)
-    #pintaI(dx,0)
 
     mcopy = np.copy(matrix)
     mcopy = gaussian_blur(mcopy, 4.5)
     kx, ky = cv2.getDerivKernels(0, 1, ksize)
     dy = convolution(mcopy, kx, ky)
     dy = dy.astype(np.float32)
-    #pintaI(dy,0)
 
     for i in range(matrix.shape[0]):
         for j in range(matrix.shape[1]):
@@ -485,6 +473,14 @@ def get_keypoints(matrix, block_size, level):
 
     return kp;
 
+""" Gestiona todo el cálculo de los puntos Harris.
+- img: imagen de la que calcular dichos puntos.
+- blok_size: tamaño de bloque para cornerEigenValsAndVecs().
+- threshold: umbral que se usará para descartar valores.
+- level: nivel de la pirámide.
+- winSize (op): tamaño de la ventana para la supresión de no máximos.
+            Por defecto vale 5.
+"""
 def getHarris(img, block_size, ksize, threshold, level, winSize = 5):
     # Se calculan los autovectoresy autovalores:
     vals_vecs = cv2.cornerEigenValsAndVecs(img, block_size, ksize)
@@ -504,7 +500,7 @@ def getHarris(img, block_size, ksize, threshold, level, winSize = 5):
     return get_keypoints(harris, block_size, level)
 
 """ Refina la posición de los keypoints sobre una imagen.
-- img:
+- img: imagen a refinar.
 """
 def refineHarris(img):
 
@@ -553,10 +549,15 @@ def ejercicio_1(img):
 """
 Dadas dos imágenes calcula los keypoints y descriptores para obtener los matches
 usando "BruteForce+crossCheck". Devuelve la imagen compuesta.
-- n: número de matches a mostrar
-- flag: indica si se muestran los keypoints y los matches (0) o solo los matches (2).
+- img1: Primera imagen para el match.
+- img2: Segunda imagen para el match.
+- n (op): número de matches a mostrar. Por defecto 100.
+- flag (op): indica si se muestran los keypoints y los matches (0) o solo los matches (2).
+            Por defecto 2.
+- flagReturn (op): indica si debemos devolver los keypoints y matches o la imagen.
+            Por defecto devolvemos la imagen.
 """
-def getMatches_BF_CC(img1, img2, n = 100, flag = 2):
+def getMatches_BF_CC(img1, img2, n = 100, flag = 2, flagReturn = 1):
     # Inicializamos el descriptor AKAZE
     detector = cv2.AKAZE_create()
     # Se obtienen los keypoints y los descriptores de las dos imágenes
@@ -574,16 +575,27 @@ def getMatches_BF_CC(img1, img2, n = 100, flag = 2):
 
     # Imagen con los matches
     img_match = cv2.drawMatches(img1, keypoints1, img2, keypoints2, matches1to2, None, flags = flag)
-    return img_match
+
+    # El usuario nos indica si quiere los keypoints y matches o la imagen
+    if flagReturn:
+        return img_match
+    else:
+        return keypoints1, keypoints2, matches1to2
 
 """
 Dadas dos imágenes calcula los keypoints y descriptores para obtener los matches
 usando "Lowe-Average-2NN". Devuelve la imagen compuesta.
 Si se indica el flag "improve" como True, elegirá los mejores matches.
-- n: número de matches a mostrar
-- flag: indica si se muestran los keypoints y los matches (0) o solo los matches (2).
+- img1: Primera imagen para el match.
+- img2: Segunda imagen para el match.
+- n (op): número de matches a mostrar. Por defecto 100.
+- ratio (op): Radio para la distancia entre puntos. Por defecto 0.8.
+- flag (op): indica si se muestran los keypoints y los matches (0) o solo los matches (2).
+            Por defecto 2.
+- flagReturn (op): indica si debemos devolver los keypoints y matches o la imagen.
+            Por defecto devolvemos la imagen.
 """
-def getMatches_LA_2NN(img1, img2, ratio = 0.8, n = 100, flag = 2):
+def getMatches_LA_2NN(img1, img2, n = 100, ratio = 0.8, flag = 2, flagReturn = 1):
     # Inicializamos el descriptor AKAZE
     detector = cv2.AKAZE_create()
     # Se obtienen los keypoints y los descriptores de las dos imágenes
@@ -609,17 +621,26 @@ def getMatches_LA_2NN(img1, img2, ratio = 0.8, n = 100, flag = 2):
 
     # Imagen con los matches
     img_match = cv2.drawMatchesKnn(img1, keypoints1, img2, keypoints2, matches1to2, None, flags = flag)
-    return img_match
+
+    # El usuario nos indica si quiere los keypoints y matches o la imagen
+    if flagReturn:
+        return img_match
+    else:
+        return keypoints1, keypoints2, matches1to2
 
 """ Ejecución de ejemplos del ejercicio 2.
-- image:
+- img1: Primera imagen para el match.
+- img2: Segunda imagen para el match.
+- image_title (op): título de la imagen. Por defecto 'Imagen'.
 """
-def ejercicio_2(img1, img2):
+def ejercicio_2(img1, img2, image_title = "Imagen"):
     print("--- EJERCICIO 2 - DESCRIPTORES AKAZE CON BFMatcher Y CRITERIOS BruteForce+crossCheck y Lowe-Average-2NN ---")
+    img1 = img1.astype(np.uint8)
+    img2 = img1.astype(np.uint8)
     match_BF_CC = getMatches_BF_CC(img1, img2)
-    pintaI(match_BF_CC)
+    pintaI(match_BF_CC, 0, image_title, "Ejercicio 2")
     match_LA_2NN = getMatches_LA_2NN(img1, img2)
-    pintaI(match_LA_2NN)
+    pintaI(match_LA_2NN, 0, image_title, "Ejercicio 2")
     input("Pulsa 'Enter' para continuar\n")
 
 
@@ -627,12 +648,71 @@ def ejercicio_2(img1, img2):
 ###   EJERCICIO 3   ###
 #######################
 
+""" Calcula la homografía entre dos imágenes.
+- img1: primera imagen.
+- img2: segunda imagen.
+- flag (op): si vale 1 se calculará con Lowe-Average-2NN y si vale 0
+    con BruteForce+crossCheck. Por defecto vale 1.
+"""
+def getHomography(img1, img2, flag=1):
+    # Obtenemos los keyPoints y matches entre las dos imagenes.
+    if(flag):
+        kpts1, kpts2, matches = getMatches_LA_2NN(img1, img2, flagReturn=0)
+    else:
+        kpts1, kpts2, matches = getMatches_BF_CC(img1, img2, flagReturn=0)
+    # Ordeno los puntos para usar findHomography
+    puntos_origen = np.float32([kpts1[punto[0].queryIdx].pt for punto in matches]).reshape(-1, 1, 2)
+    puntos_destino = np.float32([kpts2[punto[0].trainIdx].pt for punto in matches]).reshape(-1, 1, 2)
+    # Llamamos a findHomography
+    homografia , _ = cv2.findHomography(puntos_origen, puntos_destino, cv2.RANSAC, 1)
+    return homografia
 
+""" Calcula la homografia que lleva la imagen al centro del mosaico.
+- img: Imagen
+- mosaicWidth: ancho del mosaico.
+- mosaicHeight: alto del mosaico.
+"""
+def identityHomography(img, mosaicWidth, mosaicHeight):
+    tx = mosaicWidth/2 - img.shape[0]/2     # Calculamos traslación en x
+    ty = mosaicHeight/2 - img.shape[1]/2    # Calculamos traslación en y
+    return np.array([[1, 0, tx], [0, 1, ty], [0, 0, 1]], dtype=np.float32)
+
+""" Calcula el mosaico resultante de N imágenes.
+- list: Lista de imágenes.
+"""
+def getMosaicN(list):
+    homographies = [None] * len(list)           # Lista de homografías
+    ind_center = int(len(list)/2)               # Índice de la imagen central
+    img_center =  list[ind_center]              # Imagen central
+    width = sum([im.shape[1] for im in list])   # Ancho del mosaico
+    height = list[0].shape[0]*2                 # Alto del mosaico
+
+    # Homografía central
+    hom_center = identityHomography(img_center, width, height)
+    homographies[ind_center] = hom_center
+    res = cv2.warpPerspective(img_center, hom_center, (width, height), borderMode=cv2.BORDER_TRANSPARENT)
+
+    # Empezamos por el centro y vamos hacia atrás
+    for i in range(0, ind_center)[::-1]:
+        h = getHomography(list[i], list[i+1])
+        h = np.dot(homographies[i+1], h)
+        homographies[i] = h
+        res = cv2.warpPerspective(list[i], h, (width, height), dst=res, borderMode=cv2.BORDER_TRANSPARENT)
+
+    # Empezamos por el centro y vamos hacia delante
+    for i in range(ind_center+1, len(list)):
+        h = getHomography(list[i], list[i-1])
+        h = np.dot(homographies[i-1], h)
+        homographies[i] = h
+        res = cv2.warpPerspective(list[i], h, (width, height), dst=res, borderMode=cv2.BORDER_TRANSPARENT)
+
+    return res
 
 """ Ejecución de ejemplos del ejercicio 3.
-- image:
+- img1: Primera imagen para el mosaico.
+- img2: Segunda imagen para el mosaico.
 """
-def ejercicio_3():
+def ejercicio_3(img1, img2):
     print("--- EJERCICIO 3 - TIT ---")
 
     input("Pulsa 'Enter' para continuar\n")
@@ -644,20 +724,14 @@ def ejercicio_3():
 
 
 """ Ejecución de ejemplos del ejercicio 4.
-- image:
+- lista_img: lista de imágenes de la que hacer el mosaico.
+- image_title (op): título de la imagen. Por defecto 'Imagen'.
 """
-def ejercicio_4():
-    print("--- EJERCICIO 4 - TIT ---")
-    mosaico = [leer_imagen("imagenes/mosaico002.jpg", 0),
-               leer_imagen("imagenes/mosaico003.jpg", 0),
-               leer_imagen("imagenes/mosaico004.jpg", 0),
-               leer_imagen("imagenes/mosaico005.jpg", 0),
-               leer_imagen("imagenes/mosaico006.jpg", 0),
-               leer_imagen("imagenes/mosaico007.jpg", 0),
-               leer_imagen("imagenes/mosaico008.jpg", 0),
-               leer_imagen("imagenes/mosaico009.jpg", 0),
-               leer_imagen("imagenes/mosaico010.jpg", 0),
-               leer_imagen("imagenes/mosaico011.jpg", 0)]
+def ejercicio_4(lista_img, image_title = "Imagen"):
+    print("--- EJERCICIO 4 - MOSAICO N IMÁGENES ---")
+    print("Haciendo el mosaico '" + image_title + "'")
+    img_mosaic = getMosaicN(lista_img)
+    pintaI(img_mosaic, image_title=image_title, window_title="Ejercicio 4")
     input("Pulsa 'Enter' para continuar\n")
 
 #######################
@@ -678,14 +752,37 @@ def bonus_1():
 ###       MAIN      ###
 #######################
 
+""" Programa principal. """
 def main():
-    gray1 = leer_imagen("imagenes/yosemite1.jpg", 0)
-    gray2 = leer_imagen("imagenes/yosemite2.jpg", 0)
+    gray1 = leer_imagen("imagenes/Yosemite1.jpg", 0)
+    gray2 = leer_imagen("imagenes/Yosemite2.jpg", 0)
 
-    ejercicio_1(gray1)
-    ejercicio_2(gray1, gray2)
-    #ejercicio_3()
-    #ejercicio_4()
+    #ejercicio_1(gray1)
+    #ejercicio_2(gray1, gray2, "Yosemite")
+    ejercicio_3()
+    '''
+    lista_etsiit = [leer_imagen("imagenes/mosaico002.jpg", 1),
+                    leer_imagen("imagenes/mosaico003.jpg", 1),
+                    leer_imagen("imagenes/mosaico004.jpg", 1),
+                    leer_imagen("imagenes/mosaico005.jpg", 1),
+                    leer_imagen("imagenes/mosaico006.jpg", 1),
+                    leer_imagen("imagenes/mosaico007.jpg", 1),
+                    leer_imagen("imagenes/mosaico008.jpg", 1),
+                    leer_imagen("imagenes/mosaico009.jpg", 1),
+                    leer_imagen("imagenes/mosaico010.jpg", 1),
+                    leer_imagen("imagenes/mosaico011.jpg", 1)]
+    lista_yos1   = [leer_imagen("imagenes/yosemite1.jpg", 1),
+                    leer_imagen("imagenes/yosemite2.jpg", 1),
+                    leer_imagen("imagenes/yosemite3.jpg", 1),
+                    leer_imagen("imagenes/yosemite4.jpg", 1)]
+    lista_yos2   = [leer_imagen("imagenes/yosemite5.jpg", 1),
+                    leer_imagen("imagenes/yosemite6.jpg", 1),
+                    leer_imagen("imagenes/yosemite7.jpg", 1)]
+
+    ejercicio_4(lista_etsiit, "ETSIIT")
+    ejercicio_4(lista_yos1, "Yosemite 1")
+    ejercicio_4(lista_yos2, "Yosemite 2")
+    '''
     #bonus_1()
 
 if __name__ == "__main__":
