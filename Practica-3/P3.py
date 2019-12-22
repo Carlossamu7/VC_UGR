@@ -278,10 +278,39 @@ def getHarris(img, block_size, ksize, threshold, level, winSize = 5):
 
 """ Refina la posición de los keypoints sobre una imagen.
 - img: imagen a refinar.
+- points: puntos Harris antiguos.
 """
-def refineHarris(img):
+def refineHarris(img, points):
+    ajustadosAMostrar = []
+    listaRes = []
 
-    return 0
+    # Ajustamos los puntos
+    p = np.array([punto.pt for punto in points], dtype = np.uint32)
+    p_ajustados = p.reshape(len(points), 1, 2).astype(np.float32)
+    cv2.cornerSubPix(img, p_ajustados, (5, 5), (-1, -1), (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 50, 0.001))
+
+    # Busco tres puntos ajustados distintos de los originales
+    for j in range(0,3):
+        ran = random.randint(0, len(p)-1)
+        if (p[ran] != p_ajustados[ran][0]).any():
+            ajustadosAMostrar.append(ran)
+
+    img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB).astype(np.float32)
+
+    # Para cada punto ajustado hacer...
+    for i in ajustadosAMostrar:
+        m_ampliada = np.ndarray(shape=(img.shape[0]+2*5, img.shape[1]+2*5, 3))
+        m_ampliada[:, :] = 0
+        m_ampliada[5:img.shape[0]+5, 5:img.shape[1]+5] = img.copy()
+        col, fil = p[i]
+        col_ajustado, fil_ajustado = p_ajustados[i][0]
+        res = m_ampliada[fil - 5:fil + 6, col - 5:col + 6]
+        res = cv2.resize(res, None, fx = 5, fy = 5) # zoom de x5
+        # Señalamos con verde el nuevo y con rojo el antiguo
+        res = cv2.circle(res, (int(5*(5+col_ajustado-col)+1), int(5*(5+fil_ajustado-fil)+1)), 3, (0, 255, 0))
+        res = cv2.circle(res, (5*5+1, 5*5+1), 3, (255, 0, 0))
+        listaRes.append(res)
+    return listaRes
 
 """ Ejecución de ejemplos del ejercicio 1.
 - image: Imagen a estudiar y de la que sacar los puntos Harris.
@@ -309,14 +338,12 @@ def ejercicio_1(img):
     pintaI(img_all_harris, 0, "Puntos Harris de todos los niveles", "Ejercicio 1A")
     print("El número de keypoints total es {}".format(num_kp))
 
-    #APARTADO D
-    print("Apartado d: refinamos puntos Harris")
-    keypoints_refined = []
-    for l in range(levels):
-        #keypoints.append( getHarris(pyr[l], 3, 3, 0.001, l) )
-        keypoints_refined.append(refineHarris(pyr[l]))
-        #img_refinada = cv2.circle(img, center=(y, x), radius=0.1, color=(0,250,0), thickness=1)
-        #pintaI(img_refinada)
+    print("EJERCICIO 1D: Refinar 3 puntos Harris")
+    levelChosen = 1
+    refinados = refineHarris(copy, keypoints[levelChosen])
+    for i in range(0, len(refinados)):
+        pintaI(refinados[i], "Punto Harris refinado", "Ejercicio1D")
+
     input("Pulsa 'Enter' para continuar\n")
 
 #######################
@@ -452,8 +479,8 @@ def getMosaic(img1, img2):
     height = int(img1.shape[0] * 1.4)                   # Alto del mosaico
 
     print("El mosaico resultante tiene tamaño ({}, {})".format(width, height))
-    tx = 0.09 * width    # Calculo tralación en x
-    ty = 0.09 * height   # Calculo tralación en y
+    tx = 0.09 * width    # Calculo traslación en x
+    ty = 0.09 * height   # Calculo traslación en y
 
     # Homografía 1
     hom1 = np.array([[1, 0, tx], [0, 1, ty], [0, 0, 1]], dtype=np.float32)
