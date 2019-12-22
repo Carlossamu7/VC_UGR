@@ -533,7 +533,7 @@ def ejercicio_1(img):
     print("El número de keypoints total es {}".format(num_kp))
 
     #APARTADO D
-    print("Apartado d -> refinación")
+    print("Apartado d: refinamos puntos Harris")
     keypoints_refined = []
     for l in range(levels):
         #keypoints.append( getHarris(pyr[l], 3, 3, 0.001, l) )
@@ -636,13 +636,12 @@ def getMatches_LA_2NN(img1, img2, n = 100, ratio = 0.8, flag = 2, flagReturn = 1
 def ejercicio_2(img1, img2, image_title = "Imagen"):
     print("--- EJERCICIO 2 - DESCRIPTORES AKAZE CON BFMatcher Y CRITERIOS BruteForce+crossCheck y Lowe-Average-2NN ---")
     img1 = img1.astype(np.uint8)
-    img2 = img1.astype(np.uint8)
+    img2 = img2.astype(np.uint8)
     match_BF_CC = getMatches_BF_CC(img1, img2)
     pintaI(match_BF_CC, 0, image_title, "Ejercicio 2")
     match_LA_2NN = getMatches_LA_2NN(img1, img2)
     pintaI(match_LA_2NN, 0, image_title, "Ejercicio 2")
     input("Pulsa 'Enter' para continuar\n")
-
 
 #######################
 ###   EJERCICIO 3   ###
@@ -667,6 +666,44 @@ def getHomography(img1, img2, flag=1):
     homografia , _ = cv2.findHomography(puntos_origen, puntos_destino, cv2.RANSAC, 1)
     return homografia
 
+""" Calcula el mosaico resultante de N imágenes.
+- list: Lista de imágenes.
+"""
+def getMosaic(img1, img2):
+    homographies = [None, None]                         # Lista de homografías
+    width = int((img1.shape[1]+img2.shape[1]) * 0.9)    # Ancho del mosaico
+    height = int(img1.shape[0] * 1.4)                   # Alto del mosaico
+
+    print("El mosaico resultante tiene tamaño ({}, {})".format(width, height))
+    tx = 0.09 * width    # Calculo tralación en x
+    ty = 0.09 * height   # Calculo tralación en y
+
+    # Homografía 1
+    hom1 = np.array([[1, 0, tx], [0, 1, ty], [0, 0, 1]], dtype=np.float32)
+    res = cv2.warpPerspective(img1, hom1, (width, height), borderMode=cv2.BORDER_TRANSPARENT)
+    # Homografía 2
+    hom2 = getHomography(img2, img1)
+    hom2 = np.dot(hom1, hom2)
+    res = cv2.warpPerspective(img2, hom2, (width, height), dst=res, borderMode=cv2.BORDER_TRANSPARENT)
+
+    return res
+
+""" Ejecución de ejemplos del ejercicio 3.
+- img1: Primera imagen para el mosaico.
+- img2: Segunda imagen para el mosaico.
+- image_title (op): título de la imagen. Por defecto 'Imagen'.
+"""
+def ejercicio_3(img1, img2, image_title = "Imagen"):
+    print("--- EJERCICIO 3 - MOSAICO 2 IMÁGENES ---")
+    print("Haciendo el mosaico '" + image_title + "'")
+    img_mosaic = getMosaic(img1, img2)
+    pintaI(img_mosaic, image_title = image_title, window_title = "Ejercicio 3")
+    input("Pulsa 'Enter' para continuar\n")
+
+#######################
+###   EJERCICIO 4   ###
+#######################
+
 """ Calcula la homografia que lleva la imagen al centro del mosaico.
 - img: Imagen
 - mosaicWidth: ancho del mosaico.
@@ -681,11 +718,13 @@ def identityHomography(img, mosaicWidth, mosaicHeight):
 - list: Lista de imágenes.
 """
 def getMosaicN(list):
-    homographies = [None] * len(list)           # Lista de homografías
-    ind_center = int(len(list)/2)               # Índice de la imagen central
-    img_center =  list[ind_center]              # Imagen central
-    width = sum([im.shape[1] for im in list])   # Ancho del mosaico
-    height = list[0].shape[0]*2                 # Alto del mosaico
+    homographies = [None] * len(list)                       # Lista de homografías
+    ind_center = int(len(list)/2)                           # Índice de la imagen central
+    img_center =  list[ind_center]                          # Imagen central
+    width = int(sum([im.shape[1] for im in list]) * 0.9)    # Ancho del mosaico
+    height = list[0].shape[0] * 2                           # Alto del mosaico
+
+    print("El mosaico resultante tiene tamaño ({}, {})".format(width, height))
 
     # Homografía central
     hom_center = identityHomography(img_center, width, height)
@@ -708,21 +747,6 @@ def getMosaicN(list):
 
     return res
 
-""" Ejecución de ejemplos del ejercicio 3.
-- img1: Primera imagen para el mosaico.
-- img2: Segunda imagen para el mosaico.
-"""
-def ejercicio_3(img1, img2):
-    print("--- EJERCICIO 3 - TIT ---")
-
-    input("Pulsa 'Enter' para continuar\n")
-
-#######################
-###   EJERCICIO 4   ###
-#######################
-
-
-
 """ Ejecución de ejemplos del ejercicio 4.
 - lista_img: lista de imágenes de la que hacer el mosaico.
 - image_title (op): título de la imagen. Por defecto 'Imagen'.
@@ -731,7 +755,7 @@ def ejercicio_4(lista_img, image_title = "Imagen"):
     print("--- EJERCICIO 4 - MOSAICO N IMÁGENES ---")
     print("Haciendo el mosaico '" + image_title + "'")
     img_mosaic = getMosaicN(lista_img)
-    pintaI(img_mosaic, image_title=image_title, window_title="Ejercicio 4")
+    pintaI(img_mosaic, image_title = image_title, window_title = "Ejercicio 4")
     input("Pulsa 'Enter' para continuar\n")
 
 #######################
@@ -754,13 +778,13 @@ def bonus_1():
 
 """ Programa principal. """
 def main():
+    # Leemos la imágenes que necesitaremos
     gray1 = leer_imagen("imagenes/Yosemite1.jpg", 0)
     gray2 = leer_imagen("imagenes/Yosemite2.jpg", 0)
-
-    #ejercicio_1(gray1)
-    #ejercicio_2(gray1, gray2, "Yosemite")
-    ejercicio_3()
-    '''
+    yos1 = leer_imagen("imagenes/Yosemite1.jpg", 1)
+    yos2 = leer_imagen("imagenes/Yosemite2.jpg", 1)
+    et1 = leer_imagen("imagenes/mosaico010.jpg", 1)
+    et2 = leer_imagen("imagenes/mosaico011.jpg", 1)
     lista_etsiit = [leer_imagen("imagenes/mosaico002.jpg", 1),
                     leer_imagen("imagenes/mosaico003.jpg", 1),
                     leer_imagen("imagenes/mosaico004.jpg", 1),
@@ -778,11 +802,16 @@ def main():
     lista_yos2   = [leer_imagen("imagenes/yosemite5.jpg", 1),
                     leer_imagen("imagenes/yosemite6.jpg", 1),
                     leer_imagen("imagenes/yosemite7.jpg", 1)]
+    print("")
 
-    ejercicio_4(lista_etsiit, "ETSIIT")
+    # Ejecutamos los ejercicios
+    #ejercicio_1(gray1)
+    #ejercicio_2(gray1, gray2, "Yosemite")
+    ejercicio_3(yos1, yos2, "Yosemite")
+    ejercicio_3(et1, et2, "ETSIIT")
+    #ejercicio_4(lista_etsiit, "ETSIIT")
     ejercicio_4(lista_yos1, "Yosemite 1")
-    ejercicio_4(lista_yos2, "Yosemite 2")
-    '''
+    #ejercicio_4(lista_yos2, "Yosemite 2")
     #bonus_1()
 
 if __name__ == "__main__":
