@@ -155,6 +155,7 @@ def gaussian_pyramid(image, levels = 4, border_type = cv2.BORDER_DEFAULT):
 
 """ Supresión de de no máximos.
 - image: imagen a tratar
+- winSize: tamaño de la ventana sobre la cual hacer la supresión.
 """
 def non_maximum_supression(image, winSize):
     res = np.zeros(image.shape)
@@ -333,7 +334,7 @@ usando "BruteForce+crossCheck". Devuelve la imagen compuesta.
 - flagReturn (op): indica si debemos devolver los keypoints y matches o la imagen.
             Por defecto devolvemos la imagen.
 """
-def getMatches_BF_CC(img1, img2, n = 100, flag = 2, flagReturn = 1):
+def getMatches_BFCC(img1, img2, n = 100, flag = 2, flagReturn = 1):
     # Inicializamos el descriptor AKAZE
     detector = cv2.AKAZE_create()
     # Se obtienen los keypoints y los descriptores de las dos imágenes
@@ -371,7 +372,7 @@ Si se indica el flag "improve" como True, elegirá los mejores matches.
 - flagReturn (op): indica si debemos devolver los keypoints y matches o la imagen.
             Por defecto devolvemos la imagen.
 """
-def getMatches_LA_2NN(img1, img2, n = 100, ratio = 0.8, flag = 2, flagReturn = 1):
+def getMatches_LA2NN(img1, img2, n = 100, ratio = 0.8, flag = 2, flagReturn = 1):
     # Inicializamos el descriptor AKAZE
     detector = cv2.AKAZE_create()
     # Se obtienen los keypoints y los descriptores de las dos imágenes
@@ -413,9 +414,9 @@ def ejercicio_2(img1, img2, image_title = "Imagen"):
     print("--- EJERCICIO 2 - DESCRIPTORES AKAZE CON BFMatcher Y CRITERIOS BruteForce+crossCheck y Lowe-Average-2NN ---")
     img1 = img1.astype(np.uint8)
     img2 = img2.astype(np.uint8)
-    match_BF_CC = getMatches_BF_CC(img1, img2)
+    match_BF_CC = getMatches_BFCC(img1, img2)
     pintaI(match_BF_CC, 0, image_title, "Ejercicio 2")
-    match_LA_2NN = getMatches_LA_2NN(img1, img2)
+    match_LA_2NN = getMatches_LA2NN(img1, img2)
     pintaI(match_LA_2NN, 0, image_title, "Ejercicio 2")
     input("Pulsa 'Enter' para continuar\n")
 
@@ -432,9 +433,9 @@ def ejercicio_2(img1, img2, image_title = "Imagen"):
 def getHomography(img1, img2, flag=1):
     # Obtenemos los keyPoints y matches entre las dos imagenes.
     if(flag):
-        kpts1, kpts2, matches = getMatches_LA_2NN(img1, img2, flagReturn=0)
+        kpts1, kpts2, matches = getMatches_LA2NN(img1, img2, flagReturn=0)
     else:
-        kpts1, kpts2, matches = getMatches_BF_CC(img1, img2, flagReturn=0)
+        kpts1, kpts2, matches = getMatches_BFCC(img1, img2, flagReturn=0)
     # Ordeno los puntos para usar findHomography
     puntos_origen = np.float32([kpts1[punto[0].queryIdx].pt for punto in matches]).reshape(-1, 1, 2)
     puntos_destino = np.float32([kpts2[punto[0].trainIdx].pt for punto in matches]).reshape(-1, 1, 2)
